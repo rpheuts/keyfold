@@ -9,6 +9,7 @@ import android.view.HapticFeedbackConstants
 import android.view.MotionEvent
 import android.view.View
 import androidx.core.content.ContextCompat
+import kotlin.math.abs
 import com.keyfold.terminal.R
 import com.keyfold.terminal.model.KeyDefinition
 import com.keyfold.terminal.model.KeyType
@@ -27,6 +28,7 @@ class KeyFoldKeyboardView @JvmOverloads constructor(
 
     var onKeyPressed: ((KeyDefinition) -> Unit)? = null
     var onKeyLongPressed: ((KeyDefinition) -> Unit)? = null
+    var onCursorMove: ((stepsX: Int, stepsY: Int) -> Unit)? = null
 
     var currentLayout: KeyboardLayout? = null
         set(value) {
@@ -104,6 +106,47 @@ class KeyFoldKeyboardView @JvmOverloads constructor(
     private val ledPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         style = Paint.Style.FILL
         color = ContextCompat.getColor(context, R.color.kb_led_active)
+    }
+
+    // Trackpad Paints (Space Bar Cursor Mode)
+    private val trackpadPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        style = Paint.Style.FILL
+    }
+    private val trackpadGlowPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        style = Paint.Style.STROKE
+    }
+    private val trackpadBorderPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        style = Paint.Style.STROKE
+    }
+    private val trackpadLabelPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        textAlign = Paint.Align.CENTER
+        typeface = Typeface.create(Typeface.MONOSPACE, Typeface.BOLD)
+    }
+
+    // Spacebar Cursor Trackpad State
+    private var isSpaceTrackpadActive = false
+    private var isSpaceTrackpadPending = false
+    private var spacePointerId: Int? = null
+    private var spaceTouchStartX = 0f
+    private var spaceTouchStartY = 0f
+    private var spaceLastX = 0f
+    private var spaceLastY = 0f
+    private var spaceAccumulatedDx = 0f
+    private var spaceAccumulatedDy = 0f
+    private val spaceTrackpadHandler = Handler(Looper.getMainLooper())
+    private val spaceTrackpadRunnable = Runnable {
+        if (isSpaceTrackpadPending) {
+            isSpaceTrackpadActive = true
+            isSpaceTrackpadPending = false
+            performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
+            invalidate()
+        }
+    }
+
+    private fun performHapticTick() {
+        if (!performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)) {
+            performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
+        }
     }
 
     // Touch & Key tracking
@@ -186,6 +229,40 @@ class KeyFoldKeyboardView @JvmOverloads constructor(
     private fun drawKey(canvas: Canvas, key: KeyDefinition, rect: RectF) {
         if (key.type == KeyType.spacer) return
 
+        val isSpace = key.code == "SPACE"
+        if (isSpace && isSpaceTrackpadActive) {
+            val accentColor = ContextCompat.getColor(context, R.color.kb_accent)
+            val density = resources.displayMetrics.density
+
+            // Glowing translucent fill
+            trackpadPaint.color = Color.argb(64, Color.red(accentColor), Color.green(accentColor), Color.blue(accentColor))
+            canvas.drawRoundRect(rect, keyCornerRadius, keyCornerRadius, trackpadPaint)
+
+            // Outer wide glow aura
+            trackpadGlowPaint.strokeWidth = 5f * density
+            trackpadGlowPaint.color = Color.argb(80, Color.red(accentColor), Color.green(accentColor), Color.blue(accentColor))
+            canvas.drawRoundRect(rect, keyCornerRadius, keyCornerRadius, trackpadGlowPaint)
+
+            // Sharp inner glowing border
+            trackpadBorderPaint.strokeWidth = 2.5f * density
+            trackpadBorderPaint.color = accentColor
+            canvas.drawRoundRect(rect, keyCornerRadius, keyCornerRadius, trackpadBorderPaint)
+
+            // Dynamic responsive trackpad text
+            val trackpadText = if (rect.width() > 180f * density) {
+                "◀   SLIDE TO MOVE CURSOR   ▶"
+            } else {
+                "◀   CURSOR   ▶"
+            }
+            trackpadLabelPaint.textSize = rect.height() * 0.36f
+            trackpadLabelPaint.color = Color.WHITE
+            val fontMetrics = trackpadLabelPaint.fontMetrics
+            val textY = rect.centerY() - (fontMetrics.ascent + fontMetrics.descent) / 2f
+            canvas.drawText(trackpadText, rect.centerX(), textY, trackpadLabelPaint)
+            return
+        }
+
+        val dim = isSpaceTrackpadActive
         val isPressed = pressedKey == key || activePointerKeys.values.contains(key)
         val isModifier = key.type == KeyType.modifier
         val isLatched = isModifier && isModifierLatched(key.code)
@@ -200,7 +277,7 @@ class KeyFoldKeyboardView @JvmOverloads constructor(
             key.type == KeyType.action -> ContextCompat.getColor(context, R.color.kb_action_bg)
             else -> ContextCompat.getColor(context, R.color.kb_key_bg)
         }
-
+        if (dim) keyPaint.alpha = (keyPaint.alpha * 0.40f).toInt()
         canvas.drawRoundRect(rect, keyCornerRadius, keyCornerRadius, keyPaint)
 
         // Keycap border
@@ -208,6 +285,7 @@ class KeyFoldKeyboardView @JvmOverloads constructor(
             isLocked || isLatched -> ContextCompat.getColor(context, R.color.kb_modifier_latched_border)
             else -> ContextCompat.getColor(context, R.color.kb_key_border)
         }
+        if (dim) borderPaint.alpha = (borderPaint.alpha * 0.30f).toInt()
         canvas.drawRoundRect(rect, keyCornerRadius, keyCornerRadius, borderPaint)
 
         // LED Indicator on modifier key
@@ -215,6 +293,7 @@ class KeyFoldKeyboardView @JvmOverloads constructor(
             val ledRadius = 3.5f * resources.displayMetrics.density
             val ledX = rect.left + 8f * resources.displayMetrics.density
             val ledY = rect.top + 8f * resources.displayMetrics.density
+            if (dim) ledPaint.alpha = (ledPaint.alpha * 0.40f).toInt() else ledPaint.alpha = 255
             canvas.drawCircle(ledX, ledY, ledRadius, ledPaint)
         }
 
@@ -223,6 +302,7 @@ class KeyFoldKeyboardView @JvmOverloads constructor(
             shiftLabelPaint.textSize = rect.height() * 0.28f
             val shiftX = rect.right - 6f * resources.displayMetrics.density
             val shiftY = rect.top + shiftLabelPaint.textSize + 3f * resources.displayMetrics.density
+            if (dim) shiftLabelPaint.alpha = (shiftLabelPaint.alpha * 0.25f).toInt() else shiftLabelPaint.alpha = 255
             canvas.drawText(key.shift, shiftX, shiftY, shiftLabelPaint)
         }
 
@@ -244,7 +324,7 @@ class KeyFoldKeyboardView @JvmOverloads constructor(
             isPressed -> ContextCompat.getColor(context, R.color.kb_accent)
             else -> ContextCompat.getColor(context, R.color.kb_text_primary)
         }
-
+        if (dim) labelPaint.alpha = (labelPaint.alpha * 0.30f).toInt()
         val fontMetrics = labelPaint.fontMetrics
         val textY = rect.centerY() - (fontMetrics.ascent + fontMetrics.descent) / 2f
         canvas.drawText(displayLabel, rect.centerX(), textY, labelPaint)
@@ -285,6 +365,22 @@ class KeyFoldKeyboardView @JvmOverloads constructor(
 
         when (event.actionMasked) {
             MotionEvent.ACTION_DOWN, MotionEvent.ACTION_POINTER_DOWN -> {
+                // If trackpad mode is already active, ignore other finger touches
+                if (isSpaceTrackpadActive) {
+                    return true
+                }
+
+                // If user was pending a space tap and touches another key, flush space immediately for fast typing
+                if (isSpaceTrackpadPending && spacePointerId != null && spacePointerId != pointerId) {
+                    spaceTrackpadHandler.removeCallbacks(spaceTrackpadRunnable)
+                    val spaceKey = activePointerKeys.remove(spacePointerId!!)
+                    if (spaceKey != null) {
+                        onKeyPressed?.invoke(spaceKey)
+                    }
+                    isSpaceTrackpadPending = false
+                    spacePointerId = null
+                }
+
                 val x = event.getX(actionIndex)
                 val y = event.getY(actionIndex)
                 val key = findKeyAt(x, y)
@@ -293,25 +389,110 @@ class KeyFoldKeyboardView @JvmOverloads constructor(
                     pressedKey = key
                     performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
 
-                    val hasSecondary = !key.shift.isNullOrEmpty() || !key.shiftOutput.isNullOrEmpty()
-                    if (key.repeat) {
-                        onKeyPressed?.invoke(key)
-                        startRepeating(key)
-                    } else if (hasSecondary) {
-                        longPressKey = key
-                        longPressTriggered = false
-                        longPressHandler.removeCallbacks(longPressRunnable)
-                        longPressHandler.postDelayed(longPressRunnable, 400)
+                    if (key.code == "SPACE") {
+                        spacePointerId = pointerId
+                        spaceTouchStartX = x
+                        spaceTouchStartY = y
+                        spaceLastX = x
+                        spaceLastY = y
+                        spaceAccumulatedDx = 0f
+                        spaceAccumulatedDy = 0f
+                        isSpaceTrackpadPending = true
+                        isSpaceTrackpadActive = false
+                        spaceTrackpadHandler.removeCallbacks(spaceTrackpadRunnable)
+                        spaceTrackpadHandler.postDelayed(spaceTrackpadRunnable, 250)
                     } else {
-                        onKeyPressed?.invoke(key)
+                        val hasSecondary = !key.shift.isNullOrEmpty() || !key.shiftOutput.isNullOrEmpty()
+                        if (key.repeat) {
+                            onKeyPressed?.invoke(key)
+                            startRepeating(key)
+                        } else if (hasSecondary) {
+                            longPressKey = key
+                            longPressTriggered = false
+                            longPressHandler.removeCallbacks(longPressRunnable)
+                            longPressHandler.postDelayed(longPressRunnable, 400)
+                        } else {
+                            onKeyPressed?.invoke(key)
+                        }
                     }
                     invalidate()
                 }
             }
 
+            MotionEvent.ACTION_MOVE -> {
+                val spId = spacePointerId
+                if (spId != null) {
+                    val pIndex = event.findPointerIndex(spId)
+                    if (pIndex != -1) {
+                        val curX = event.getX(pIndex)
+                        val curY = event.getY(pIndex)
+                        val totalDistX = abs(curX - spaceTouchStartX)
+                        val totalDistY = abs(curY - spaceTouchStartY)
+                        val slop = 10f * resources.displayMetrics.density
+
+                        if (!isSpaceTrackpadActive && (totalDistX > slop || totalDistY > slop)) {
+                            isSpaceTrackpadActive = true
+                            isSpaceTrackpadPending = false
+                            spaceTrackpadHandler.removeCallbacks(spaceTrackpadRunnable)
+                            performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
+                            spaceLastX = curX
+                            spaceLastY = curY
+                            spaceAccumulatedDx = 0f
+                            spaceAccumulatedDy = 0f
+                            invalidate()
+                        }
+
+                        if (isSpaceTrackpadActive) {
+                            val dx = curX - spaceLastX
+                            val dy = curY - spaceLastY
+                            spaceLastX = curX
+                            spaceLastY = curY
+
+                            spaceAccumulatedDx += dx
+                            spaceAccumulatedDy += dy
+
+                            val stepThresholdX = 10f * resources.displayMetrics.density
+                            val stepThresholdY = 16f * resources.displayMetrics.density
+
+                            if (abs(spaceAccumulatedDx) >= stepThresholdX) {
+                                val stepsX = (spaceAccumulatedDx / stepThresholdX).toInt()
+                                if (stepsX != 0) {
+                                    onCursorMove?.invoke(stepsX, 0)
+                                    spaceAccumulatedDx -= stepsX * stepThresholdX
+                                    performHapticTick()
+                                }
+                            }
+
+                            if (abs(spaceAccumulatedDy) >= stepThresholdY) {
+                                val stepsY = (spaceAccumulatedDy / stepThresholdY).toInt()
+                                if (stepsY != 0) {
+                                    onCursorMove?.invoke(0, stepsY)
+                                    spaceAccumulatedDy -= stepsY * stepThresholdY
+                                    performHapticTick()
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
             MotionEvent.ACTION_UP, MotionEvent.ACTION_POINTER_UP -> {
                 val key = activePointerKeys.remove(pointerId)
-                if (key != null) {
+
+                if (pointerId == spacePointerId) {
+                    spaceTrackpadHandler.removeCallbacks(spaceTrackpadRunnable)
+                    val wasActive = isSpaceTrackpadActive
+                    val wasPending = isSpaceTrackpadPending
+                    isSpaceTrackpadActive = false
+                    isSpaceTrackpadPending = false
+                    spacePointerId = null
+
+                    if (!wasActive && wasPending && key != null) {
+                        onKeyPressed?.invoke(key)
+                    }
+                    pressedKey = activePointerKeys.values.lastOrNull()
+                    invalidate()
+                } else if (key != null) {
                     longPressHandler.removeCallbacks(longPressRunnable)
                     stopRepeating()
                     if (!key.repeat && (!key.shift.isNullOrEmpty() || !key.shiftOutput.isNullOrEmpty())) {
@@ -327,6 +508,11 @@ class KeyFoldKeyboardView @JvmOverloads constructor(
             }
 
             MotionEvent.ACTION_CANCEL -> {
+                spaceTrackpadHandler.removeCallbacks(spaceTrackpadRunnable)
+                isSpaceTrackpadActive = false
+                isSpaceTrackpadPending = false
+                spacePointerId = null
+
                 longPressHandler.removeCallbacks(longPressRunnable)
                 longPressKey = null
                 longPressTriggered = false

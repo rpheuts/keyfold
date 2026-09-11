@@ -347,6 +347,12 @@ class KeyFoldSettingsActivity : AppCompatActivity() {
                     testInputField.append(key.label)
                 }
             }
+            onCursorMove = { stepsX, _ ->
+                val current = testInputField.selectionStart
+                val len = testInputField.text.length
+                val target = (current + stepsX).coerceIn(0, len)
+                testInputField.setSelection(target)
+            }
         }
         root.addView(previewKeyboardView)
 

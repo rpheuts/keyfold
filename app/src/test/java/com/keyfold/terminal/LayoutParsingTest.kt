@@ -51,4 +51,17 @@ class LayoutParsingTest {
             )
         }
     }
+
+    @Test
+    fun testAllLayoutsContainSpaceKeyWithSpaceCode() {
+        val assetDir = File("src/main/assets/layouts")
+        val jsonFiles = assetDir.listFiles { f -> f.extension == "json" }
+        assertNotNull(jsonFiles)
+        for (file in jsonFiles!!) {
+            val content = file.readText()
+            val layout = json.decodeFromString<KeyboardLayout>(content)
+            val hasSpace = layout.rows.any { row -> row.keys.any { it.code == "SPACE" } }
+            assertTrue("Layout in ${file.name} should contain a key with code SPACE", hasSpace)
+        }
+    }
 }

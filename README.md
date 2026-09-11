@@ -13,23 +13,29 @@ It brings back the beloved "Hacker's Keyboard" experience with deep hardware fol
    - Snaps keyboard height to the lower half below the hinge crease (~50% height).
    - Insets tell Termux to occupy the top half without entering full-screen "extract mode".
    - You can hide Termux's extra keys bar to reclaim maximum screen real estate.
-2. **Samsung-Style Cover Screen Mode**:
+2. **Space Bar Cursor Trackpad Mode (Glowing UI & Haptics)**:
+   - **Hold & Slide**: Hold the space bar for 250ms (or swipe across it) to transform the keyboard into a precision cursor trackpad.
+   - **Glowing Visual Feedback**: The space bar illuminates with a glowing neon-cyan aura and displays responsive cursor navigation indicators (`◀  SLIDE TO MOVE CURSOR  ▶`), while background keys dim to focus your attention.
+   - **Universal Compatibility**: Slide your thumb left, right, up, or down to navigate text. Emits DPAD events that work seamlessly across both standard Android apps (Chrome, messaging) and **Termux** (`bash`, `nano`, `vim`, `fzf`).
+   - **Tactile Haptic Ticks**: Delivers a crisp haptic tick for each character step so you can feel text navigation without looking.
+   - **Zero Typing Latency**: Fast two-thumb rollover logic ensures that fast typing is never delayed or misordered.
+3. **Samsung-Style Cover Screen Mode**:
    - When the device is closed (`FOLDED_PORTRAIT`), KeyFold automatically switches to a clean 4-row layout matching the standard **Samsung Keyboard**.
    - Removes terminal clutter (`Tab`, `Esc`, `Ctrl`, `Alt`, arrow keys) on the narrow cover screen for comfortable one-handed or two-thumb typing.
    - Centered home row (`a`–`l`) using spacer keys with standard key pitch and sizing.
    - **Secondary Numbers & Long-Press**: Keys `q`–`p` feature numbers `1`–`0` and `.` has `?`. Long-pressing any key for 400ms outputs its secondary symbol with tactile haptic feedback.
    - **Dedicated Symbol Layer**: Tap **`!#1`** to toggle full symbol keyboard (`@`, `#`, `$`, `%`, `&`, `-`, `+`, `(`, `)`, quotes, punctuation, and Settings shortcut `⚙`). Tap **`ABC`** to return.
-3. **Interactive Height Tuning & Live Preview**:
+4. **Interactive Height Tuning & Live Preview**:
    - In-app GUI settings card to customize the keyboard height independently for each posture profile.
    - Switch between **Percentage of Screen** (slider 25%–65% with `+`/`-` fine-tuning steppers), **Snap Below Hinge**, or **Fixed DP**.
    - Embedded real-time interactive preview that scales as you slide.
    - Writes directly to the layout JSON files and hot-reloads the active IME instantly.
-4. **Terminal-First Unfolded Layouts**:
+5. **Terminal-First Unfolded Layouts**:
    - 5 full rows with dedicated `ESC`, `TAB`, `CTRL`, `ALT`, cursor arrows (`▲`, `▼`, `◀`, `▶`), and direct symbol keys (`~`, `/`, `-`, `|`, `\`, `` ` ``, `$`).
    - Sticky modifier keys: single tap latches modifier for next keystroke; double tap locks (Caps/Ctrl lock); illuminated LED indicators.
    - Long-press repeat on Backspace, Delete, and Arrow keys.
    - `FN` layer with `F1`–`F12`, `Home`, `End`, `PgUp`, `PgDn`, `Insert`, and numeric keypad.
-5. **Multi-Posture Detection**:
+6. **Multi-Posture Detection**:
    - Automatically switches layout and height across 6 postures:
      * `UNFOLDED_LANDSCAPE_HALF` (PDA Tabletop flex mode)
      * `UNFOLDED_LANDSCAPE_FLAT` (Tablet landscape)
@@ -37,7 +43,7 @@ It brings back the beloved "Hacker's Keyboard" experience with deep hardware fol
      * `UNFOLDED_PORTRAIT_FLAT` (Tablet portrait)
      * `FOLDED_PORTRAIT` (Cover screen phone mode)
      * `FOLDED_LANDSCAPE` (Cover screen landscape)
-6. **JSON-Configurable & Hot-Reloadable**:
+7. **JSON-Configurable & Hot-Reloadable**:
    - Layouts are plain human-readable JSON files.
    - Automatically exported on launch to:
      `/sdcard/Android/data/com.keyfold.terminal/files/layouts/`

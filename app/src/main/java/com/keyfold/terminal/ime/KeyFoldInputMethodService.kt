@@ -108,6 +108,7 @@ class KeyFoldInputMethodService : InputMethodService() {
         val kb = KeyFoldKeyboardView(this).apply {
             onKeyPressed = { key -> handleKeyPress(key) }
             onKeyLongPressed = { key -> handleLongPress(key) }
+            onCursorMove = { stepsX, stepsY -> handleCursorMove(stepsX, stepsY) }
         }
         keyboardView = kb
         container.addView(kb)
@@ -276,6 +277,28 @@ class KeyFoldInputMethodService : InputMethodService() {
         if (!textToEmit.isNullOrEmpty()) {
             ic.commitText(textToEmit, 1)
             consumeLatchedModifiers()
+        }
+    }
+
+    private fun handleCursorMove(stepsX: Int, stepsY: Int) {
+        if (stepsX > 0) {
+            repeat(stepsX) {
+                sendKeyWithModifiers(KeyEvent.KEYCODE_DPAD_RIGHT)
+            }
+        } else if (stepsX < 0) {
+            repeat(-stepsX) {
+                sendKeyWithModifiers(KeyEvent.KEYCODE_DPAD_LEFT)
+            }
+        }
+
+        if (stepsY > 0) {
+            repeat(stepsY) {
+                sendKeyWithModifiers(KeyEvent.KEYCODE_DPAD_DOWN)
+            }
+        } else if (stepsY < 0) {
+            repeat(-stepsY) {
+                sendKeyWithModifiers(KeyEvent.KEYCODE_DPAD_UP)
+            }
         }
     }
 
