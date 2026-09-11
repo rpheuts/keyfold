@@ -20,6 +20,11 @@ class KeyFoldKeyboardView @JvmOverloads constructor(
     defStyleAttr: Int = 0
 ) : View(context, attrs, defStyleAttr) {
 
+    init {
+        isClickable = true
+        isFocusable = false
+    }
+
     var onKeyPressed: ((KeyDefinition) -> Unit)? = null
     var onKeyLongPressed: ((KeyDefinition) -> Unit)? = null
 
@@ -123,6 +128,16 @@ class KeyFoldKeyboardView @JvmOverloads constructor(
         val key: KeyDefinition,
         val rect: RectF
     )
+
+    override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
+        val width = MeasureSpec.getSize(widthMeasureSpec)
+        val height = if (layoutParams != null && layoutParams.height > 0) {
+            layoutParams.height
+        } else {
+            MeasureSpec.getSize(heightMeasureSpec)
+        }
+        setMeasuredDimension(width, height)
+    }
 
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
         super.onSizeChanged(w, h, oldw, oldh)
@@ -293,7 +308,24 @@ class KeyFoldKeyboardView @JvmOverloads constructor(
     }
 
     private fun findKeyAt(x: Float, y: Float): KeyDefinition? {
-        return cachedKeyBounds.firstOrNull { it.rect.contains(x, y) }?.key
+        val exact = cachedKeyBounds.firstOrNull { it.rect.contains(x, y) }
+        if (exact != null) return exact.key
+
+        val tolerance = 10f * resources.displayMetrics.density
+        var closestKey: KeyDefinition? = null
+        var minDistanceSq = Float.MAX_VALUE
+
+        for (kb in cachedKeyBounds) {
+            val r = kb.rect
+            val dx = if (x < r.left) r.left - x else if (x > r.right) x - r.right else 0f
+            val dy = if (y < r.top) r.top - y else if (y > r.bottom) y - r.bottom else 0f
+            val distSq = dx * dx + dy * dy
+            if (distSq < tolerance * tolerance && distSq < minDistanceSq) {
+                minDistanceSq = distSq
+                closestKey = kb.key
+            }
+        }
+        return closestKey
     }
 
     private fun startRepeating(key: KeyDefinition) {

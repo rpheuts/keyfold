@@ -9,9 +9,11 @@ import android.graphics.Rect
 import android.inputmethodservice.InputMethodService
 import android.os.SystemClock
 import android.util.Log
+import android.view.KeyCharacterMap
 import android.view.KeyEvent
 import android.view.View
 import android.view.ViewGroup
+import android.view.inputmethod.EditorInfo
 import android.widget.FrameLayout
 import android.widget.Toast
 import androidx.core.content.ContextCompat
@@ -112,22 +114,29 @@ class KeyFoldInputMethodService : InputMethodService() {
         return container
     }
 
+    override fun onStartInputView(info: EditorInfo?, restarting: Boolean) {
+        super.onStartInputView(info, restarting)
+        postureDetector.onConfigurationChanged()
+        applyCurrentPostureLayout(postureDetector.posture.value)
+        rootContainer?.requestLayout()
+    }
+
     override fun onConfigurationChanged(newConfig: Configuration) {
         super.onConfigurationChanged(newConfig)
         postureDetector.onConfigurationChanged()
         applyCurrentPostureLayout(postureDetector.posture.value)
+        rootContainer?.requestLayout()
     }
 
     override fun onComputeInsets(outInsets: Insets) {
         super.onComputeInsets(outInsets)
         val container = rootContainer
         if (container != null && container.isShown) {
-            val totalHeight = resources.displayMetrics.heightPixels
-            val inputHeight = container.measuredHeight.coerceAtLeast(container.height)
-            val topCoord = (totalHeight - inputHeight).coerceAtLeast(0)
-            outInsets.contentTopInsets = topCoord
-            outInsets.visibleTopInsets = topCoord
-            outInsets.touchableInsets = Insets.TOUCHABLE_INSETS_CONTENT
+            val loc = IntArray(2)
+            container.getLocationInWindow(loc)
+            outInsets.contentTopInsets = loc[1]
+            outInsets.visibleTopInsets = loc[1]
+            outInsets.touchableInsets = Insets.TOUCHABLE_INSETS_VISIBLE
         }
     }
 
@@ -325,8 +334,15 @@ class KeyFoldInputMethodService : InputMethodService() {
         }
 
         val now = SystemClock.uptimeMillis()
-        val downEvent = KeyEvent(now, now, KeyEvent.ACTION_DOWN, keyCode, 0, metaState)
-        val upEvent = KeyEvent(now, now, KeyEvent.ACTION_UP, keyCode, 0, metaState)
+        val flags = KeyEvent.FLAG_SOFT_KEYBOARD or KeyEvent.FLAG_KEEP_TOUCH_MODE
+        val downEvent = KeyEvent(
+            now, now, KeyEvent.ACTION_DOWN, keyCode, 0, metaState,
+            KeyCharacterMap.VIRTUAL_KEYBOARD, 0, flags
+        )
+        val upEvent = KeyEvent(
+            now, now, KeyEvent.ACTION_UP, keyCode, 0, metaState,
+            KeyCharacterMap.VIRTUAL_KEYBOARD, 0, flags
+        )
 
         ic.sendKeyEvent(downEvent)
         ic.sendKeyEvent(upEvent)
