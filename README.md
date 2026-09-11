@@ -25,17 +25,21 @@ It brings back the beloved "Hacker's Keyboard" experience with deep hardware fol
    - Centered home row (`a`–`l`) using spacer keys with standard key pitch and sizing.
    - **Secondary Numbers & Long-Press**: Keys `q`–`p` feature numbers `1`–`0` and `.` has `?`. Long-pressing any key for 400ms outputs its secondary symbol with tactile haptic feedback.
    - **Dedicated Symbol Layer**: Tap **`!#1`** to toggle full symbol keyboard (`@`, `#`, `$`, `%`, `&`, `-`, `+`, `(`, `)`, quotes, punctuation, and Settings shortcut `⚙`). Tap **`ABC`** to return.
-4. **Interactive Height Tuning & Live Preview**:
+4. **Frosted Glass Translucent Theme & Hardware Blur**:
+   - **Android 12+ Compositor Blur**: Leverages `Window.setBackgroundBlurRadius(80)` to hardware-blur windows, dialogs, and sheets underlying the keyboard.
+   - **Smoked Glass Keycaps**: High-contrast smoked glass tiles (`rgba(34, 38, 46, 0.82)`) with crisp bevel borders and a translucent dark background.
+   - **Settings Toggle & Live Preview**: Switch between **Frosted Glass** and **Solid Dark** anytime in the companion app with real-time preview updates.
+5. **Interactive Height Tuning & Live Preview**:
    - In-app GUI settings card to customize the keyboard height independently for each posture profile.
    - Switch between **Percentage of Screen** (slider 25%–65% with `+`/`-` fine-tuning steppers), **Snap Below Hinge**, or **Fixed DP**.
    - Embedded real-time interactive preview that scales as you slide.
    - Writes directly to the layout JSON files and hot-reloads the active IME instantly.
-5. **Terminal-First Unfolded Layouts**:
+6. **Terminal-First Unfolded Layouts**:
    - 5 full rows with dedicated `ESC`, `TAB`, `CTRL`, `ALT`, cursor arrows (`▲`, `▼`, `◀`, `▶`), and direct symbol keys (`~`, `/`, `-`, `|`, `\`, `` ` ``, `$`).
    - Sticky modifier keys: single tap latches modifier for next keystroke; double tap locks (Caps/Ctrl lock); illuminated LED indicators.
    - Long-press repeat on Backspace, Delete, and Arrow keys.
    - `FN` layer with `F1`–`F12`, `Home`, `End`, `PgUp`, `PgDn`, `Insert`, and numeric keypad.
-6. **Multi-Posture Detection**:
+7. **Multi-Posture Detection**:
    - Automatically switches layout and height across 6 postures:
      * `UNFOLDED_LANDSCAPE_HALF` (PDA Tabletop flex mode)
      * `UNFOLDED_LANDSCAPE_FLAT` (Tablet landscape)
@@ -43,7 +47,7 @@ It brings back the beloved "Hacker's Keyboard" experience with deep hardware fol
      * `UNFOLDED_PORTRAIT_FLAT` (Tablet portrait)
      * `FOLDED_PORTRAIT` (Cover screen phone mode)
      * `FOLDED_LANDSCAPE` (Cover screen landscape)
-7. **JSON-Configurable & Hot-Reloadable**:
+8. **JSON-Configurable & Hot-Reloadable**:
    - Layouts are plain human-readable JSON files.
    - Automatically exported on launch to:
      `/sdcard/Android/data/com.keyfold.terminal/files/layouts/`
