@@ -1,24 +1,13 @@
 {
   "id": "folded_portrait",
-  "name": "Cover Screen Portrait Terminal",
+  "name": "Cover Screen Phone Keyboard",
   "height": {
     "mode": "percentage",
-    "fallbackPercent": 36
+    "percent": 34,
+    "fallbackPercent": 34,
+    "offsetDp": 0
   },
   "rows": [
-    {
-      "keys": [
-        { "label": "ESC", "code": "ESCAPE", "type": "action", "width": 1.1 },
-        { "label": "TAB", "code": "TAB", "type": "action", "width": 1.1 },
-        { "label": "CTRL", "code": "CTRL", "type": "modifier", "sticky": true, "width": 1.2 },
-        { "label": "ALT", "code": "ALT", "type": "modifier", "sticky": true, "width": 1.1 },
-        { "label": "~", "output": "~", "width": 1.0 },
-        { "label": "/", "output": "/", "width": 1.0 },
-        { "label": "-", "output": "-", "width": 1.0 },
-        { "label": "|", "output": "|", "width": 1.0 },
-        { "label": "⌫", "code": "DEL", "type": "action", "repeat": true, "width": 1.3 }
-      ]
-    },
     {
       "keys": [
         { "label": "q", "shift": "1", "output": "q", "shiftOutput": "1" },
@@ -35,40 +24,39 @@
     },
     {
       "keys": [
-        { "label": "a", "shift": "!", "output": "a", "shiftOutput": "!" },
-        { "label": "s", "shift": "@", "output": "s", "shiftOutput": "@" },
-        { "label": "d", "shift": "#", "output": "d", "shiftOutput": "#" },
-        { "label": "f", "shift": "$", "output": "f", "shiftOutput": "$" },
-        { "label": "g", "shift": "%", "output": "g", "shiftOutput": "%" },
-        { "label": "h", "shift": "^", "output": "h", "shiftOutput": "^" },
-        { "label": "j", "shift": "&", "output": "j", "shiftOutput": "&" },
-        { "label": "k", "shift": "*", "output": "k", "shiftOutput": "*" },
-        { "label": "l", "shift": ":", "output": "l", "shiftOutput": ":" },
-        { "label": "⏎", "code": "ENTER", "type": "action", "width": 1.5 }
+        { "label": "", "type": "spacer", "width": 0.5 },
+        { "label": "a", "output": "a" },
+        { "label": "s", "output": "s" },
+        { "label": "d", "output": "d" },
+        { "label": "f", "output": "f" },
+        { "label": "g", "output": "g" },
+        { "label": "h", "output": "h" },
+        { "label": "j", "output": "j" },
+        { "label": "k", "output": "k" },
+        { "label": "l", "output": "l" },
+        { "label": "", "type": "spacer", "width": 0.5 }
       ]
     },
     {
       "keys": [
         { "label": "⇧", "code": "SHIFT", "type": "modifier", "sticky": true, "width": 1.4 },
-        { "label": "z", "shift": "_", "output": "z", "shiftOutput": "_" },
-        { "label": "x", "shift": "=", "output": "x", "shiftOutput": "=" },
-        { "label": "c", "shift": "+", "output": "c", "shiftOutput": "+" },
-        { "label": "v", "shift": "[", "output": "v", "shiftOutput": "[" },
-        { "label": "b", "shift": "]", "output": "b", "shiftOutput": "]" },
-        { "label": "n", "shift": "{", "output": "n", "shiftOutput": "{" },
-        { "label": "m", "shift": "}", "output": "m", "shiftOutput": "}" },
-        { "label": ".", "shift": "?", "output": ".", "shiftOutput": "?" },
-        { "label": "▲", "code": "DPAD_UP", "type": "action", "repeat": true, "width": 1.2 }
+        { "label": "z", "output": "z" },
+        { "label": "x", "output": "x" },
+        { "label": "c", "output": "c" },
+        { "label": "v", "output": "v" },
+        { "label": "b", "output": "b" },
+        { "label": "n", "output": "n" },
+        { "label": "m", "output": "m" },
+        { "label": "⌫", "code": "DEL", "type": "action", "repeat": true, "width": 1.6 }
       ]
     },
     {
       "keys": [
-        { "label": "FN", "code": "FN", "type": "layer", "width": 1.1 },
-        { "label": " ", "output": " ", "code": "SPACE", "width": 3.8 },
-        { "label": "◀", "code": "DPAD_LEFT", "type": "action", "repeat": true, "width": 1.1 },
-        { "label": "▼", "code": "DPAD_DOWN", "type": "action", "repeat": true, "width": 1.1 },
-        { "label": "▶", "code": "DPAD_RIGHT", "type": "action", "repeat": true, "width": 1.1 },
-        { "label": "⚙", "code": "SETTINGS", "type": "action", "width": 1.0 }
+        { "label": "!#1", "code": "SYM", "type": "layer", "width": 1.4 },
+        { "label": ",", "output": ",", "width": 1.0 },
+        { "label": " ", "code": "SPACE", "output": " ", "width": 5.0 },
+        { "label": ".", "shift": "?", "output": ".", "shiftOutput": "?", "width": 1.0 },
+        { "label": "⏎", "code": "ENTER", "type": "action", "width": 1.6 }
       ]
     }
   ]

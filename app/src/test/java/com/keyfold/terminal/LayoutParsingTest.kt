@@ -31,7 +31,9 @@ class LayoutParsingTest {
             for ((rowIndex, row) in layout.rows.withIndex()) {
                 assertTrue("Row $rowIndex in ${file.name} should have keys", row.keys.isNotEmpty())
                 for (key in row.keys) {
-                    assertFalse("Key label in ${file.name} should not be empty", key.label.isEmpty())
+                    if (key.type != com.keyfold.terminal.model.KeyType.spacer) {
+                        assertFalse("Key label in ${file.name} should not be empty", key.label.isEmpty())
+                    }
                     assertTrue("Key width should be > 0 in ${file.name}", key.width > 0f)
                 }
             }

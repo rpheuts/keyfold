@@ -184,6 +184,8 @@ class KeyFoldKeyboardView @JvmOverloads constructor(
     }
 
     private fun drawKey(canvas: Canvas, key: KeyDefinition, rect: RectF) {
+        if (key.type == KeyType.spacer) return
+
         val isPressed = pressedKey == key || activePointerKeys.values.contains(key)
         val isModifier = key.type == KeyType.modifier
         val isLatched = isModifier && isModifierLatched(key.code)
@@ -266,6 +268,17 @@ class KeyFoldKeyboardView @JvmOverloads constructor(
         }
     }
 
+    private var longPressKey: KeyDefinition? = null
+    private var longPressTriggered = false
+    private val longPressHandler = Handler(Looper.getMainLooper())
+    private val longPressRunnable = Runnable {
+        longPressKey?.let { key ->
+            longPressTriggered = true
+            performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
+            onKeyLongPressed?.invoke(key)
+        }
+    }
+
     override fun onTouchEvent(event: MotionEvent): Boolean {
         val actionIndex = event.actionIndex
         val pointerId = event.getPointerId(actionIndex)
@@ -279,10 +292,18 @@ class KeyFoldKeyboardView @JvmOverloads constructor(
                     activePointerKeys[pointerId] = key
                     pressedKey = key
                     performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
-                    onKeyPressed?.invoke(key)
 
+                    val hasSecondary = !key.shift.isNullOrEmpty() || !key.shiftOutput.isNullOrEmpty()
                     if (key.repeat) {
+                        onKeyPressed?.invoke(key)
                         startRepeating(key)
+                    } else if (hasSecondary) {
+                        longPressKey = key
+                        longPressTriggered = false
+                        longPressHandler.removeCallbacks(longPressRunnable)
+                        longPressHandler.postDelayed(longPressRunnable, 400)
+                    } else {
+                        onKeyPressed?.invoke(key)
                     }
                     invalidate()
                 }
@@ -291,13 +312,24 @@ class KeyFoldKeyboardView @JvmOverloads constructor(
             MotionEvent.ACTION_UP, MotionEvent.ACTION_POINTER_UP -> {
                 val key = activePointerKeys.remove(pointerId)
                 if (key != null) {
+                    longPressHandler.removeCallbacks(longPressRunnable)
                     stopRepeating()
+                    if (!key.repeat && (!key.shift.isNullOrEmpty() || !key.shiftOutput.isNullOrEmpty())) {
+                        if (!longPressTriggered) {
+                            onKeyPressed?.invoke(key)
+                        }
+                    }
+                    longPressKey = null
+                    longPressTriggered = false
                     pressedKey = activePointerKeys.values.lastOrNull()
                     invalidate()
                 }
             }
 
             MotionEvent.ACTION_CANCEL -> {
+                longPressHandler.removeCallbacks(longPressRunnable)
+                longPressKey = null
+                longPressTriggered = false
                 activePointerKeys.clear()
                 pressedKey = null
                 stopRepeating()
@@ -308,7 +340,7 @@ class KeyFoldKeyboardView @JvmOverloads constructor(
     }
 
     private fun findKeyAt(x: Float, y: Float): KeyDefinition? {
-        val exact = cachedKeyBounds.firstOrNull { it.rect.contains(x, y) }
+        val exact = cachedKeyBounds.firstOrNull { it.key.type != KeyType.spacer && it.rect.contains(x, y) }
         if (exact != null) return exact.key
 
         val tolerance = 10f * resources.displayMetrics.density
@@ -316,6 +348,7 @@ class KeyFoldKeyboardView @JvmOverloads constructor(
         var minDistanceSq = Float.MAX_VALUE
 
         for (kb in cachedKeyBounds) {
+            if (kb.key.type == KeyType.spacer) continue
             val r = kb.rect
             val dx = if (x < r.left) r.left - x else if (x > r.right) x - r.right else 0f
             val dy = if (y < r.top) r.top - y else if (y > r.bottom) y - r.bottom else 0f

@@ -128,7 +128,8 @@ class KeyFoldSettingsActivity : AppCompatActivity() {
         val exportButton = Button(this).apply {
             text = "Reset Defaults"
             setOnClickListener {
-                layoutRepository.ensureDefaultLayoutsExported()
+                layoutRepository.ensureDefaultLayoutsExported(force = true)
+                sendBroadcast(Intent(KeyFoldInputMethodService.ACTION_RELOAD_CONFIG))
                 updatePostureDisplay()
                 loadCurrentModeHeightConfig()
                 Toast.makeText(this@KeyFoldSettingsActivity, "Default JSONs re-exported!", Toast.LENGTH_SHORT).show()

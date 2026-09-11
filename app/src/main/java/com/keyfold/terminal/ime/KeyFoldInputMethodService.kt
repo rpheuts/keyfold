@@ -45,6 +45,7 @@ class KeyFoldInputMethodService : InputMethodService() {
     private var keyboardView: KeyFoldKeyboardView? = null
 
     private var isFnActive = false
+    private var isSymActive = false
     private var baseLayout: KeyboardLayout? = null
 
     // Modifier Double-Tap Tracking
@@ -106,6 +107,7 @@ class KeyFoldInputMethodService : InputMethodService() {
 
         val kb = KeyFoldKeyboardView(this).apply {
             onKeyPressed = { key -> handleKeyPress(key) }
+            onKeyLongPressed = { key -> handleLongPress(key) }
         }
         keyboardView = kb
         container.addView(kb)
@@ -149,6 +151,7 @@ class KeyFoldInputMethodService : InputMethodService() {
         val layout = layoutRepository.getLayoutForPosture(posture)
         baseLayout = layout
         isFnActive = false
+        isSymActive = false
 
         updateViewLayout(layout, posture)
     }
@@ -178,6 +181,7 @@ class KeyFoldInputMethodService : InputMethodService() {
             KeyType.layer -> handleLayerPress(key)
             KeyType.action -> handleActionPress(key)
             KeyType.character -> handleCharacterPress(key)
+            KeyType.spacer -> { /* no-op */ }
         }
     }
 
@@ -238,14 +242,40 @@ class KeyFoldInputMethodService : InputMethodService() {
     }
 
     private fun handleLayerPress(key: KeyDefinition) {
-        if (key.code == "FN") {
-            isFnActive = !isFnActive
-            val targetLayout = if (isFnActive) {
-                layoutRepository.getFnLayer()
-            } else {
-                baseLayout ?: layoutRepository.getLayoutForPosture(postureDetector.posture.value)
+        when (key.code) {
+            "FN" -> {
+                isFnActive = !isFnActive
+                isSymActive = false
+                val targetLayout = if (isFnActive) {
+                    layoutRepository.getFnLayer()
+                } else {
+                    baseLayout ?: layoutRepository.getLayoutForPosture(postureDetector.posture.value)
+                }
+                keyboardView?.currentLayout = targetLayout
             }
-            keyboardView?.currentLayout = targetLayout
+            "SYM" -> {
+                isSymActive = !isSymActive
+                isFnActive = false
+                val targetLayout = if (isSymActive) {
+                    layoutRepository.getSymLayer(baseLayout?.id ?: "folded_portrait")
+                } else {
+                    baseLayout ?: layoutRepository.getLayoutForPosture(postureDetector.posture.value)
+                }
+                keyboardView?.currentLayout = targetLayout
+            }
+        }
+    }
+
+    private fun handleLongPress(key: KeyDefinition) {
+        val ic = currentInputConnection ?: return
+        val textToEmit = when {
+            !key.shiftOutput.isNullOrEmpty() -> key.shiftOutput
+            !key.shift.isNullOrEmpty() -> key.shift
+            else -> null
+        }
+        if (!textToEmit.isNullOrEmpty()) {
+            ic.commitText(textToEmit, 1)
+            consumeLatchedModifiers()
         }
     }
 

@@ -1,0 +1,63 @@
+{
+  "id": "folded_portrait_sym",
+  "name": "Cover Screen Symbols",
+  "height": {
+    "mode": "percentage",
+    "percent": 34,
+    "fallbackPercent": 34,
+    "offsetDp": 0
+  },
+  "rows": [
+    {
+      "keys": [
+        { "label": "1", "output": "1" },
+        { "label": "2", "output": "2" },
+        { "label": "3", "output": "3" },
+        { "label": "4", "output": "4" },
+        { "label": "5", "output": "5" },
+        { "label": "6", "output": "6" },
+        { "label": "7", "output": "7" },
+        { "label": "8", "output": "8" },
+        { "label": "9", "output": "9" },
+        { "label": "0", "output": "0" }
+      ]
+    },
+    {
+      "keys": [
+        { "label": "", "type": "spacer", "width": 0.5 },
+        { "label": "@", "output": "@" },
+        { "label": "#", "output": "#" },
+        { "label": "$", "output": "$" },
+        { "label": "%", "output": "%" },
+        { "label": "&", "output": "&" },
+        { "label": "-", "output": "-" },
+        { "label": "+", "output": "+" },
+        { "label": "(", "output": "(" },
+        { "label": ")", "output": ")" },
+        { "label": "", "type": "spacer", "width": 0.5 }
+      ]
+    },
+    {
+      "keys": [
+        { "label": "⚙", "code": "SETTINGS", "type": "action", "width": 1.4 },
+        { "label": "*", "output": "*" },
+        { "label": "\"", "output": "\"" },
+        { "label": "'", "output": "'" },
+        { "label": ":", "output": ":" },
+        { "label": ";", "output": ";" },
+        { "label": "!", "output": "!" },
+        { "label": "?", "output": "?" },
+        { "label": "⌫", "code": "DEL", "type": "action", "repeat": true, "width": 1.6 }
+      ]
+    },
+    {
+      "keys": [
+        { "label": "ABC", "code": "SYM", "type": "layer", "width": 1.4 },
+        { "label": "/", "output": "/", "width": 1.0 },
+        { "label": " ", "code": "SPACE", "output": " ", "width": 5.0 },
+        { "label": ".", "output": ".", "width": 1.0 },
+        { "label": "⏎", "code": "ENTER", "type": "action", "width": 1.6 }
+      ]
+    }
+  ]
+}

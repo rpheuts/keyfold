@@ -7,7 +7,8 @@ enum class KeyType {
     character,
     action,
     modifier,
-    layer
+    layer,
+    spacer
 }
 
 @Serializable

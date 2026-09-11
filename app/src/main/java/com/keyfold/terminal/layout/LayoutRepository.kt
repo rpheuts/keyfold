@@ -14,6 +14,9 @@ class LayoutRepository(private val context: Context) {
     companion object {
         private const val TAG = "KeyFoldLayouts"
         private const val ASSETS_LAYOUT_DIR = "layouts"
+        private const val CURRENT_LAYOUT_VERSION = 2
+        private const val PREFS_NAME = "keyfold_layout_prefs"
+        private const val KEY_LAYOUT_VERSION = "exported_layout_version"
     }
 
     private val json = Json {
@@ -25,7 +28,13 @@ class LayoutRepository(private val context: Context) {
     private val layoutCache = mutableMapOf<String, KeyboardLayout>()
 
     init {
-        ensureDefaultLayoutsExported()
+        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        val lastVersion = prefs.getInt(KEY_LAYOUT_VERSION, 0)
+        val force = lastVersion < CURRENT_LAYOUT_VERSION
+        ensureDefaultLayoutsExported(force = force)
+        if (force) {
+            prefs.edit().putInt(KEY_LAYOUT_VERSION, CURRENT_LAYOUT_VERSION).apply()
+        }
     }
 
     fun getLayoutsDirectory(): File {
@@ -36,14 +45,14 @@ class LayoutRepository(private val context: Context) {
         return dir
     }
 
-    fun ensureDefaultLayoutsExported() {
+    fun ensureDefaultLayoutsExported(force: Boolean = false) {
         try {
             val dir = getLayoutsDirectory()
             val assetFiles = context.assets.list(ASSETS_LAYOUT_DIR) ?: return
             for (filename in assetFiles) {
                 if (filename.endsWith(".json")) {
                     val destFile = File(dir, filename)
-                    if (!destFile.exists()) {
+                    if (force || !destFile.exists()) {
                         context.assets.open("$ASSETS_LAYOUT_DIR/$filename").use { input ->
                             destFile.outputStream().use { output ->
                                 input.copyTo(output)
@@ -52,6 +61,9 @@ class LayoutRepository(private val context: Context) {
                         Log.i(TAG, "Exported default layout: $filename to ${destFile.absolutePath}")
                     }
                 }
+            }
+            if (force) {
+                reload()
             }
         } catch (e: Exception) {
             Log.e(TAG, "Error exporting default layouts: ${e.message}", e)
@@ -70,6 +82,15 @@ class LayoutRepository(private val context: Context) {
 
     fun getFnLayer(): KeyboardLayout {
         return getLayoutById("fn_layer")
+    }
+
+    fun getSymLayer(baseLayoutId: String = "folded_portrait"): KeyboardLayout {
+        val specificSymId = "${baseLayoutId}_sym"
+        val specific = getLayoutById(specificSymId)
+        if (specific.rows.isNotEmpty()) {
+            return specific
+        }
+        return getLayoutById("folded_portrait_sym")
     }
 
     fun getLayoutById(id: String): KeyboardLayout {
