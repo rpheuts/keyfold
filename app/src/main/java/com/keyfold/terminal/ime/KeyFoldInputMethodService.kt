@@ -56,6 +56,7 @@ class KeyFoldInputMethodService : InputMethodService() {
 
     // Appearance Configuration
     private var isFrostedGlassEnabled = true
+    private var frostedBgOpacity = 75
 
     // Modifier Double-Tap Tracking
     private var lastShiftTapTime = 0L
@@ -68,7 +69,9 @@ class KeyFoldInputMethodService : InputMethodService() {
             if (intent?.action == ACTION_RELOAD_CONFIG) {
                 val prefs = getSharedPreferences("keyfold_prefs", Context.MODE_PRIVATE)
                 isFrostedGlassEnabled = prefs.getBoolean("frosted_glass_enabled", true)
+                frostedBgOpacity = prefs.getInt("frosted_bg_opacity", 75)
                 keyboardView?.isFrostedGlassEnabled = isFrostedGlassEnabled
+                keyboardView?.frostedBgOpacity = frostedBgOpacity
                 updateWindowBlur()
                 reloadLayout()
                 Toast.makeText(this@KeyFoldInputMethodService, "KeyFold: Layouts Reloaded", Toast.LENGTH_SHORT).show()
@@ -80,6 +83,7 @@ class KeyFoldInputMethodService : InputMethodService() {
         super.onCreate()
         val prefs = getSharedPreferences("keyfold_prefs", Context.MODE_PRIVATE)
         isFrostedGlassEnabled = prefs.getBoolean("frosted_glass_enabled", true)
+        frostedBgOpacity = prefs.getInt("frosted_bg_opacity", 75)
 
         layoutRepository = LayoutRepository(this)
         postureDetector = DevicePostureDetector(this, serviceScope)
@@ -155,6 +159,7 @@ class KeyFoldInputMethodService : InputMethodService() {
 
         val kb = KeyFoldKeyboardView(this).apply {
             this.isFrostedGlassEnabled = this@KeyFoldInputMethodService.isFrostedGlassEnabled
+            this.frostedBgOpacity = this@KeyFoldInputMethodService.frostedBgOpacity
             onKeyPressed = { key -> handleKeyPress(key) }
             onKeyLongPressed = { key -> handleLongPress(key) }
             onCursorMove = { stepsX, stepsY -> handleCursorMove(stepsX, stepsY) }

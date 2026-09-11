@@ -78,6 +78,12 @@ class KeyFoldKeyboardView @JvmOverloads constructor(
             invalidate()
         }
 
+    var frostedBgOpacity: Int = 75
+        set(value) {
+            field = value.coerceIn(0, 100)
+            invalidate()
+        }
+
     val isShiftActive: Boolean get() = isShiftLatched || isShiftLocked
     val isCtrlActive: Boolean get() = isCtrlLatched || isCtrlLocked
     val isAltActive: Boolean get() = isAltLatched || isAltLocked
@@ -222,7 +228,8 @@ class KeyFoldKeyboardView @JvmOverloads constructor(
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
         backgroundPaint.color = if (isFrostedGlassEnabled) {
-            Color.argb(185, 14, 18, 24)
+            val alpha = (frostedBgOpacity.coerceIn(0, 100) * 255) / 100
+            Color.argb(alpha, 14, 18, 24)
         } else {
             ContextCompat.getColor(context, R.color.kb_background)
         }

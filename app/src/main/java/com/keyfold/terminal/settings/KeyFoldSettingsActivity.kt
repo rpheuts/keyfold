@@ -513,13 +513,6 @@ class KeyFoldSettingsActivity : AppCompatActivity() {
             setTextColor(Color.parseColor("#F0F6FC"))
             textSize = 15f
             isChecked = prefs.getBoolean("frosted_glass_enabled", true)
-            setOnCheckedChangeListener { _, isChecked ->
-                prefs.edit().putBoolean("frosted_glass_enabled", isChecked).apply()
-                previewKeyboardView.isFrostedGlassEnabled = isChecked
-                sendBroadcast(Intent(KeyFoldInputMethodService.ACTION_RELOAD_CONFIG))
-                val stateText = if (isChecked) "Enabled" else "Disabled"
-                Toast.makeText(this@KeyFoldSettingsActivity, "Frosted Glass: $stateText", Toast.LENGTH_SHORT).show()
-            }
         }
         appearanceCard.addView(frostedSwitch)
 
@@ -530,6 +523,88 @@ class KeyFoldSettingsActivity : AppCompatActivity() {
             setPadding(0, 6, 0, 0)
         }
         appearanceCard.addView(appearanceDesc)
+
+        val opacityContainer = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(0, 16, 0, 0)
+            visibility = if (frostedSwitch.isChecked) View.VISIBLE else View.GONE
+        }
+
+        val currentOpacity = prefs.getInt("frosted_bg_opacity", 75)
+        val opacityLabel = TextView(this).apply {
+            text = "Background Opacity: $currentOpacity%"
+            textSize = 14f
+            setTextColor(ContextCompat.getColor(this@KeyFoldSettingsActivity, R.color.kb_text_primary))
+            setTypeface(null, Typeface.BOLD)
+            setPadding(0, 0, 0, 8)
+        }
+        opacityContainer.addView(opacityLabel)
+
+        val opacitySliderRow = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+        }
+
+        val minusOpacityBtn = Button(this).apply {
+            text = "- 5%"
+            layoutParams = LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+            )
+            setOnClickListener {
+                val s = opacitySliderRow.getChildAt(1) as? SeekBar
+                s?.let { it.progress = (it.progress - 5).coerceAtLeast(10) }
+            }
+        }
+        opacitySliderRow.addView(minusOpacityBtn)
+
+        val opacitySlider = SeekBar(this).apply {
+            min = 10
+            max = 100
+            progress = currentOpacity
+            layoutParams = LinearLayout.LayoutParams(
+                0,
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                1.0f
+            )
+            setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+                override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
+                    opacityLabel.text = "Background Opacity: $progress%"
+                    previewKeyboardView.frostedBgOpacity = progress
+                    if (fromUser) {
+                        prefs.edit().putInt("frosted_bg_opacity", progress).apply()
+                        sendBroadcast(Intent(KeyFoldInputMethodService.ACTION_RELOAD_CONFIG))
+                    }
+                }
+                override fun onStartTrackingTouch(seekBar: SeekBar?) {}
+                override fun onStopTrackingTouch(seekBar: SeekBar?) {}
+            })
+        }
+        opacitySliderRow.addView(opacitySlider)
+
+        val plusOpacityBtn = Button(this).apply {
+            text = "+ 5%"
+            layoutParams = LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+            )
+            setOnClickListener {
+                val s = opacitySliderRow.getChildAt(1) as? SeekBar
+                s?.let { it.progress = (it.progress + 5).coerceAtMost(100) }
+            }
+        }
+        opacitySliderRow.addView(plusOpacityBtn)
+        opacityContainer.addView(opacitySliderRow)
+        appearanceCard.addView(opacityContainer)
+
+        frostedSwitch.setOnCheckedChangeListener { _, isChecked ->
+            prefs.edit().putBoolean("frosted_glass_enabled", isChecked).apply()
+            previewKeyboardView.isFrostedGlassEnabled = isChecked
+            opacityContainer.visibility = if (isChecked) View.VISIBLE else View.GONE
+            sendBroadcast(Intent(KeyFoldInputMethodService.ACTION_RELOAD_CONFIG))
+            val stateText = if (isChecked) "Enabled" else "Disabled"
+            Toast.makeText(this@KeyFoldSettingsActivity, "Frosted Glass: $stateText", Toast.LENGTH_SHORT).show()
+        }
 
         val wm = getSystemService(Context.WINDOW_SERVICE) as? WindowManager
         val isBlurSupported = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
@@ -596,6 +671,7 @@ class KeyFoldSettingsActivity : AppCompatActivity() {
         // Keyboard Live Preview
         previewKeyboardView = KeyFoldKeyboardView(this).apply {
             this.isFrostedGlassEnabled = prefs.getBoolean("frosted_glass_enabled", true)
+            this.frostedBgOpacity = prefs.getInt("frosted_bg_opacity", 75)
             layoutParams = LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT
