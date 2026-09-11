@@ -12,9 +12,11 @@ enum class KeyType {
 
 @Serializable
 data class HeightConfig(
-    val mode: String = "percentage", // "fold_hinge", "percentage", "dp"
+    val mode: String = "percentage", // "percentage", "fold_hinge", "dp"
+    val percent: Int = 45,
     val fallbackPercent: Int = 45,
-    val fixedDp: Int = 300
+    val fixedDp: Int = 300,
+    val offsetDp: Int = 0
 )
 
 @Serializable

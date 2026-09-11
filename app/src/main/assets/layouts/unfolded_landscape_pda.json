@@ -2,8 +2,10 @@
   "id": "unfolded_landscape_pda",
   "name": "PDA Terminal Landscape",
   "height": {
-    "mode": "fold_hinge",
-    "fallbackPercent": 50
+    "mode": "percentage",
+    "percent": 45,
+    "fallbackPercent": 45,
+    "offsetDp": 0
   },
   "rows": [
     {

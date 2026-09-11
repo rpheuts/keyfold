@@ -2,6 +2,7 @@ package com.keyfold.terminal.layout
 
 import android.content.Context
 import android.util.Log
+import com.keyfold.terminal.model.HeightConfig
 import com.keyfold.terminal.model.KeyboardLayout
 import com.keyfold.terminal.posture.DevicePosture
 import kotlinx.serialization.json.Json
@@ -112,5 +113,23 @@ class LayoutRepository(private val context: Context) {
     fun listAvailableLayouts(): List<File> {
         val dir = getLayoutsDirectory()
         return dir.listFiles { file -> file.extension == "json" }?.toList() ?: emptyList()
+    }
+
+    fun saveLayoutHeight(layoutId: String, heightConfig: HeightConfig): Boolean {
+        return try {
+            val currentLayout = getLayoutById(layoutId)
+            val updatedLayout = currentLayout.copy(height = heightConfig)
+            layoutCache[layoutId] = updatedLayout
+
+            val dir = getLayoutsDirectory()
+            val file = File(dir, "$layoutId.json")
+            val jsonString = json.encodeToString(KeyboardLayout.serializer(), updatedLayout)
+            file.writeText(jsonString)
+            Log.i(TAG, "Saved updated height config to ${file.absolutePath}")
+            true
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to save layout height: ${e.message}", e)
+            false
+        }
     }
 }

@@ -154,30 +154,34 @@ class DevicePostureDetector(
     /**
      * Calculates the ideal keyboard height in pixels based on the posture and layout height config.
      */
+    @Suppress("UNUSED_PARAMETER")
     fun calculateKeyboardHeight(posture: DevicePosture, heightConfig: HeightConfig): Int {
         val displayMetrics = context.resources.displayMetrics
         val totalScreenHeight = displayMetrics.heightPixels
+        val offsetPx = (heightConfig.offsetDp * displayMetrics.density).toInt()
+        val percent = if (heightConfig.percent > 0) heightConfig.percent else heightConfig.fallbackPercent
 
-        return when {
-            heightConfig.mode == "fold_hinge" || posture == DevicePosture.UNFOLDED_LANDSCAPE_HALF -> {
+        val baseHeight = when (heightConfig.mode) {
+            "fold_hinge" -> {
                 val bounds = currentHingeBounds
                 if (bounds != null && bounds.bottom > 0 && bounds.bottom < totalScreenHeight) {
                     // Lower half below the hinge crease
                     totalScreenHeight - bounds.bottom
                 } else {
-                    // Fallback to percentage (e.g. 50% for tabletop mode)
-                    (totalScreenHeight * (heightConfig.fallbackPercent / 100f)).toInt()
+                    (totalScreenHeight * (percent / 100f)).toInt()
                 }
             }
-            heightConfig.mode == "percentage" -> {
-                (totalScreenHeight * (heightConfig.fallbackPercent / 100f)).toInt()
-            }
-            heightConfig.mode == "dp" -> {
+            "dp" -> {
                 (heightConfig.fixedDp * displayMetrics.density).toInt()
             }
+            "percentage" -> {
+                (totalScreenHeight * (percent / 100f)).toInt()
+            }
             else -> {
-                (totalScreenHeight * (heightConfig.fallbackPercent / 100f)).toInt()
+                (totalScreenHeight * (percent / 100f)).toInt()
             }
         }
+
+        return (baseHeight + offsetPx).coerceIn(150, (totalScreenHeight * 0.85f).toInt())
     }
 }
