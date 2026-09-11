@@ -14,7 +14,7 @@ class LayoutRepository(private val context: Context) {
     companion object {
         private const val TAG = "KeyFoldLayouts"
         private const val ASSETS_LAYOUT_DIR = "layouts"
-        private const val CURRENT_LAYOUT_VERSION = 2
+        private const val CURRENT_LAYOUT_VERSION = 3
         private const val PREFS_NAME = "keyfold_layout_prefs"
         private const val KEY_LAYOUT_VERSION = "exported_layout_version"
     }

@@ -26,6 +26,7 @@ data class KeyDefinition(
     val shift: String? = null,
     val output: String? = null,
     val shiftOutput: String? = null,
+    val hint: String? = null,
     val code: String? = null,
     val type: KeyType = KeyType.character,
     val width: Float = 1.0f,

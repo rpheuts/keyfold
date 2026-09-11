@@ -299,20 +299,26 @@ class KeyFoldKeyboardView @JvmOverloads constructor(
             canvas.drawCircle(ledX, ledY, ledRadius, ledPaint)
         }
 
-        // Secondary Shift label (top-right corner)
-        if (key.shift != null && rect.width() > 30 * resources.displayMetrics.density) {
+        // Secondary Hint label (top-right corner)
+        val hintText = when {
+            !key.hint.isNullOrEmpty() -> key.hint
+            !key.shift.isNullOrEmpty() && key.shift != key.label.uppercase() -> key.shift
+            else -> null
+        }
+        if (hintText != null && rect.width() > 30 * resources.displayMetrics.density) {
             shiftLabelPaint.textSize = rect.height() * 0.28f
             val shiftX = rect.right - 6f * resources.displayMetrics.density
             val shiftY = rect.top + shiftLabelPaint.textSize + 3f * resources.displayMetrics.density
             if (dim) shiftLabelPaint.alpha = (shiftLabelPaint.alpha * 0.25f).toInt() else shiftLabelPaint.alpha = 255
-            canvas.drawText(key.shift, shiftX, shiftY, shiftLabelPaint)
+            canvas.drawText(hintText, shiftX, shiftY, shiftLabelPaint)
         }
 
         // Primary Label (center)
-        val displayLabel = if (isShiftActive && key.shift != null && key.label.length == 1 && key.label[0].isLetter()) {
-            key.shift
-        } else {
-            key.label
+        val isLetter = key.label.length == 1 && key.label[0].isLetter()
+        val displayLabel = when {
+            isShiftActive && isLetter -> key.label.uppercase()
+            isShiftActive && key.shift != null -> key.shift
+            else -> key.label
         }
 
         val textScale = when {
@@ -348,6 +354,13 @@ class KeyFoldKeyboardView @JvmOverloads constructor(
             "ALT" -> isAltLocked
             else -> false
         }
+    }
+
+    private fun hasSecondaryCharacter(key: KeyDefinition): Boolean {
+        if (!key.hint.isNullOrEmpty()) return true
+        if (!key.shift.isNullOrEmpty() && key.shift != key.label.uppercase()) return true
+        if (!key.shiftOutput.isNullOrEmpty() && key.shiftOutput != key.label.uppercase()) return true
+        return false
     }
 
     private var longPressKey: KeyDefinition? = null
@@ -404,7 +417,7 @@ class KeyFoldKeyboardView @JvmOverloads constructor(
                         spaceTrackpadHandler.removeCallbacks(spaceTrackpadRunnable)
                         spaceTrackpadHandler.postDelayed(spaceTrackpadRunnable, 250)
                     } else {
-                        val hasSecondary = !key.shift.isNullOrEmpty() || !key.shiftOutput.isNullOrEmpty()
+                        val hasSecondary = hasSecondaryCharacter(key)
                         if (key.repeat) {
                             onKeyPressed?.invoke(key)
                             startRepeating(key)
@@ -497,7 +510,7 @@ class KeyFoldKeyboardView @JvmOverloads constructor(
                 } else if (key != null) {
                     longPressHandler.removeCallbacks(longPressRunnable)
                     stopRepeating()
-                    if (!key.repeat && (!key.shift.isNullOrEmpty() || !key.shiftOutput.isNullOrEmpty())) {
+                    if (!key.repeat && hasSecondaryCharacter(key)) {
                         if (!longPressTriggered) {
                             onKeyPressed?.invoke(key)
                         }

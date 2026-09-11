@@ -270,8 +270,9 @@ class KeyFoldInputMethodService : InputMethodService() {
     private fun handleLongPress(key: KeyDefinition) {
         val ic = currentInputConnection ?: return
         val textToEmit = when {
-            !key.shiftOutput.isNullOrEmpty() -> key.shiftOutput
-            !key.shift.isNullOrEmpty() -> key.shift
+            !key.hint.isNullOrEmpty() -> key.hint
+            !key.shiftOutput.isNullOrEmpty() && key.shiftOutput != key.label.uppercase() -> key.shiftOutput
+            !key.shift.isNullOrEmpty() && key.shift != key.label.uppercase() -> key.shift
             else -> null
         }
         if (!textToEmit.isNullOrEmpty()) {
@@ -329,11 +330,12 @@ class KeyFoldInputMethodService : InputMethodService() {
         val isCtrl = kb?.isCtrlActive == true
         val isAlt = kb?.isAltActive == true
 
+        val isLetter = key.label.length == 1 && key.label[0].isLetter()
         val textToEmit = when {
+            isShift && isLetter -> key.label.uppercase()
             isShift && !key.shiftOutput.isNullOrEmpty() -> key.shiftOutput
             isShift && !key.shift.isNullOrEmpty() -> key.shift
             !key.output.isNullOrEmpty() -> key.output
-            isShift && key.label.length == 1 && key.label[0].isLetter() -> key.label.uppercase()
             else -> key.label
         }
 

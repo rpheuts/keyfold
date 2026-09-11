@@ -10,43 +10,43 @@
   "rows": [
     {
       "keys": [
-        { "label": "q", "shift": "1", "output": "q", "shiftOutput": "1" },
-        { "label": "w", "shift": "2", "output": "w", "shiftOutput": "2" },
-        { "label": "e", "shift": "3", "output": "e", "shiftOutput": "3" },
-        { "label": "r", "shift": "4", "output": "r", "shiftOutput": "4" },
-        { "label": "t", "shift": "5", "output": "t", "shiftOutput": "5" },
-        { "label": "y", "shift": "6", "output": "y", "shiftOutput": "6" },
-        { "label": "u", "shift": "7", "output": "u", "shiftOutput": "7" },
-        { "label": "i", "shift": "8", "output": "i", "shiftOutput": "8" },
-        { "label": "o", "shift": "9", "output": "o", "shiftOutput": "9" },
-        { "label": "p", "shift": "0", "output": "p", "shiftOutput": "0" }
+        { "label": "q", "hint": "1" },
+        { "label": "w", "hint": "2" },
+        { "label": "e", "hint": "3" },
+        { "label": "r", "hint": "4" },
+        { "label": "t", "hint": "5" },
+        { "label": "y", "hint": "6" },
+        { "label": "u", "hint": "7" },
+        { "label": "i", "hint": "8" },
+        { "label": "o", "hint": "9" },
+        { "label": "p", "hint": "0" }
       ]
     },
     {
       "keys": [
         { "label": "", "type": "spacer", "width": 0.5 },
-        { "label": "a", "output": "a" },
-        { "label": "s", "output": "s" },
-        { "label": "d", "output": "d" },
-        { "label": "f", "output": "f" },
-        { "label": "g", "output": "g" },
-        { "label": "h", "output": "h" },
-        { "label": "j", "output": "j" },
-        { "label": "k", "output": "k" },
-        { "label": "l", "output": "l" },
+        { "label": "a" },
+        { "label": "s" },
+        { "label": "d" },
+        { "label": "f" },
+        { "label": "g" },
+        { "label": "h" },
+        { "label": "j" },
+        { "label": "k" },
+        { "label": "l" },
         { "label": "", "type": "spacer", "width": 0.5 }
       ]
     },
     {
       "keys": [
         { "label": "⇧", "code": "SHIFT", "type": "modifier", "sticky": true, "width": 1.4 },
-        { "label": "z", "output": "z" },
-        { "label": "x", "output": "x" },
-        { "label": "c", "output": "c" },
-        { "label": "v", "output": "v" },
-        { "label": "b", "output": "b" },
-        { "label": "n", "output": "n" },
-        { "label": "m", "output": "m" },
+        { "label": "z" },
+        { "label": "x" },
+        { "label": "c" },
+        { "label": "v" },
+        { "label": "b" },
+        { "label": "n" },
+        { "label": "m" },
         { "label": "⌫", "code": "DEL", "type": "action", "repeat": true, "width": 1.6 }
       ]
     },
@@ -55,7 +55,7 @@
         { "label": "!#1", "code": "SYM", "type": "layer", "width": 1.4 },
         { "label": ",", "output": ",", "width": 1.0 },
         { "label": " ", "code": "SPACE", "output": " ", "width": 5.0 },
-        { "label": ".", "shift": "?", "output": ".", "shiftOutput": "?", "width": 1.0 },
+        { "label": ".", "hint": "?", "output": ".", "width": 1.0 },
         { "label": "⏎", "code": "ENTER", "type": "action", "width": 1.6 }
       ]
     }
