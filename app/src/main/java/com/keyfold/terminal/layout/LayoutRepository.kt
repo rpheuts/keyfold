@@ -1,13 +1,13 @@
 package com.keyfold.terminal.layout
 
 import android.content.Context
+import android.os.Environment
 import android.util.Log
 import com.keyfold.terminal.model.HeightConfig
 import com.keyfold.terminal.model.KeyboardLayout
 import com.keyfold.terminal.posture.DevicePosture
 import kotlinx.serialization.json.Json
 import java.io.File
-import java.io.InputStream
 
 class LayoutRepository(private val context: Context) {
 
@@ -37,28 +37,62 @@ class LayoutRepository(private val context: Context) {
         }
     }
 
+    fun getPublicDocumentsLayoutsDirectory(): File {
+        return File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS), "KeyFold/layouts")
+    }
+
+    fun getAppSpecificLayoutsDirectory(): File {
+        return context.getExternalFilesDir("layouts") ?: File(context.filesDir, "layouts")
+    }
+
     fun getLayoutsDirectory(): File {
-        val dir = context.getExternalFilesDir("layouts") ?: File(context.filesDir, "layouts")
-        if (!dir.exists()) {
-            dir.mkdirs()
+        val publicDir = getPublicDocumentsLayoutsDirectory()
+        try {
+            if (!publicDir.exists()) {
+                publicDir.mkdirs()
+            }
+            if (publicDir.exists() && publicDir.canWrite()) {
+                return publicDir
+            }
+        } catch (_: Exception) {}
+
+        val appDir = getAppSpecificLayoutsDirectory()
+        if (!appDir.exists()) {
+            appDir.mkdirs()
         }
-        return dir
+        return appDir
     }
 
     fun ensureDefaultLayoutsExported(force: Boolean = false) {
+        val targets = mutableListOf<File>()
         try {
-            val dir = getLayoutsDirectory()
+            val pub = getPublicDocumentsLayoutsDirectory()
+            if (!pub.exists()) pub.mkdirs()
+            if (pub.exists() && pub.canWrite()) targets.add(pub)
+        } catch (_: Exception) {}
+
+        val appDir = getAppSpecificLayoutsDirectory()
+        if (!appDir.exists()) appDir.mkdirs()
+        if (appDir.exists()) targets.add(appDir)
+
+        try {
             val assetFiles = context.assets.list(ASSETS_LAYOUT_DIR) ?: return
-            for (filename in assetFiles) {
-                if (filename.endsWith(".json")) {
-                    val destFile = File(dir, filename)
-                    if (force || !destFile.exists()) {
-                        context.assets.open("$ASSETS_LAYOUT_DIR/$filename").use { input ->
-                            destFile.outputStream().use { output ->
-                                input.copyTo(output)
+            for (dir in targets) {
+                for (filename in assetFiles) {
+                    if (filename.endsWith(".json")) {
+                        val destFile = File(dir, filename)
+                        if (force || !destFile.exists()) {
+                            try {
+                                context.assets.open("$ASSETS_LAYOUT_DIR/$filename").use { input ->
+                                    destFile.outputStream().use { output ->
+                                        input.copyTo(output)
+                                    }
+                                }
+                                Log.i(TAG, "Exported default layout: $filename to ${destFile.absolutePath}")
+                            } catch (e: Exception) {
+                                Log.e(TAG, "Error exporting $filename to ${destFile.absolutePath}: ${e.message}")
                             }
                         }
-                        Log.i(TAG, "Exported default layout: $filename to ${destFile.absolutePath}")
                     }
                 }
             }
@@ -96,17 +130,24 @@ class LayoutRepository(private val context: Context) {
     fun getLayoutById(id: String): KeyboardLayout {
         layoutCache[id]?.let { return it }
 
-        // 1. Try loading from external storage first (user customized)
-        val externalFile = File(getLayoutsDirectory(), "$id.json")
-        if (externalFile.exists()) {
-            try {
-                val content = externalFile.readText()
-                val layout = json.decodeFromString<KeyboardLayout>(content)
-                layoutCache[id] = layout
-                Log.d(TAG, "Loaded layout '$id' from external storage: ${externalFile.absolutePath}")
-                return layout
-            } catch (e: Exception) {
-                Log.w(TAG, "Failed to parse external layout file ${externalFile.name}, falling back to asset: ${e.message}")
+        // 1. Try loading from external storage (public Documents, shared KeyFold, app-specific)
+        val candidates = listOf(
+            File(getPublicDocumentsLayoutsDirectory(), "$id.json"),
+            File(File(Environment.getExternalStorageDirectory(), "KeyFold/layouts"), "$id.json"),
+            File(getAppSpecificLayoutsDirectory(), "$id.json")
+        )
+
+        for (candidate in candidates) {
+            if (candidate.exists()) {
+                try {
+                    val content = candidate.readText()
+                    val layout = json.decodeFromString<KeyboardLayout>(content)
+                    layoutCache[id] = layout
+                    Log.d(TAG, "Loaded layout '$id' from: ${candidate.absolutePath}")
+                    return layout
+                } catch (e: Exception) {
+                    Log.w(TAG, "Failed to parse layout file ${candidate.absolutePath}, trying next: ${e.message}")
+                }
             }
         }
 
@@ -136,6 +177,57 @@ class LayoutRepository(private val context: Context) {
         return dir.listFiles { file -> file.extension == "json" }?.toList() ?: emptyList()
     }
 
+    fun getLayoutRaw(id: String): String {
+        val candidates = listOf(
+            File(getPublicDocumentsLayoutsDirectory(), "$id.json"),
+            File(File(Environment.getExternalStorageDirectory(), "KeyFold/layouts"), "$id.json"),
+            File(getAppSpecificLayoutsDirectory(), "$id.json")
+        )
+        for (candidate in candidates) {
+            if (candidate.exists()) {
+                try {
+                    return candidate.readText()
+                } catch (_: Exception) {}
+            }
+        }
+
+        return try {
+            context.assets.open("$ASSETS_LAYOUT_DIR/$id.json").bufferedReader().use { it.readText() }
+        } catch (_: Exception) {
+            ""
+        }
+    }
+
+    fun saveLayoutRaw(id: String, jsonContent: String): Pair<Boolean, String?> {
+        return try {
+            val parsed = json.decodeFromString<KeyboardLayout>(jsonContent)
+            val dir = getLayoutsDirectory()
+            val file = File(dir, "$id.json")
+            file.writeText(jsonContent)
+            layoutCache[id] = parsed
+
+            val appDir = getAppSpecificLayoutsDirectory()
+            if (appDir.absolutePath != dir.absolutePath) {
+                try {
+                    File(appDir, "$id.json").writeText(jsonContent)
+                } catch (_: Exception) {}
+            }
+            Pair(true, null)
+        } catch (e: Exception) {
+            Pair(false, e.message)
+        }
+    }
+
+    fun resetLayoutToDefault(id: String): Boolean {
+        return try {
+            val assetContent = context.assets.open("$ASSETS_LAYOUT_DIR/$id.json").bufferedReader().use { it.readText() }
+            val (success, _) = saveLayoutRaw(id, assetContent)
+            success
+        } catch (e: Exception) {
+            false
+        }
+    }
+
     fun saveLayoutHeight(layoutId: String, heightConfig: HeightConfig): Boolean {
         return try {
             val currentLayout = getLayoutById(layoutId)
@@ -146,6 +238,14 @@ class LayoutRepository(private val context: Context) {
             val file = File(dir, "$layoutId.json")
             val jsonString = json.encodeToString(KeyboardLayout.serializer(), updatedLayout)
             file.writeText(jsonString)
+
+            val appDir = getAppSpecificLayoutsDirectory()
+            if (appDir.absolutePath != dir.absolutePath) {
+                try {
+                    File(appDir, "$layoutId.json").writeText(jsonString)
+                } catch (_: Exception) {}
+            }
+
             Log.i(TAG, "Saved updated height config to ${file.absolutePath}")
             true
         } catch (e: Exception) {

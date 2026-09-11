@@ -124,33 +124,52 @@ Follow the on-screen Android package installer prompt.
 
 ---
 
-## Customizing Layouts in Termux
+---
 
-The layout files are located at:
-```bash
-cd /sdcard/Android/data/com.keyfold.terminal/files/layouts/
-ls -la
-```
+## Customizing Layouts
 
-Edit any layout, for example `unfolded_landscape_pda.json`:
-```bash
-nano unfolded_landscape_pda.json
-```
+### Option A: Edit Directly in Termux (CLI)
 
-Trigger hot-reloading instantly:
-```bash
-am broadcast -a com.keyfold.terminal.RELOAD_CONFIG
-```
-You can create a convenient alias in your `~/.bashrc` in Termux:
-```bash
-alias kfreload='am broadcast -a com.keyfold.terminal.RELOAD_CONFIG'
-```
+On modern Android (Android 11–14 on Galaxy Fold 7), Google Scoped Storage restricts access to `/sdcard/Android/data/`. To give you full access, KeyFold automatically exports layouts to your shared **Documents** folder.
+
+1. Ensure storage is accessible in Termux (run once):
+   ```bash
+   termux-setup-storage
+   ```
+2. Navigate to KeyFold layouts:
+   ```bash
+   cd ~/storage/shared/Documents/KeyFold/layouts/
+   ls -la
+   ```
+3. Edit any layout with your favorite terminal editor:
+   ```bash
+   nano unfolded_landscape_pda.json
+   # or: vim folded_portrait.json
+   ```
+4. Hot-reload your changes instantly:
+   ```bash
+   am broadcast -a com.keyfold.terminal.RELOAD_CONFIG
+   ```
+   *(Tip: Add `alias kfreload='am broadcast -a com.keyfold.terminal.RELOAD_CONFIG'` to your `~/.bashrc`!)*
+
+---
+
+### Option B: In-App Layout JSON Editor (GUI)
+
+KeyFold includes a built-in JSON editor inside the companion settings app:
+
+1. Open the **KeyFold** app (or tap `⚙` in the cover screen symbol layer).
+2. Scroll to the **In-App Layout JSON Editor** card.
+3. Select any layout from the dropdown (e.g. `folded_portrait.json`, `unfolded_landscape_pda.json`).
+4. Edit the JSON directly in the monospace text box.
+5. Tap **Save & Apply** — it automatically checks JSON syntax, writes to storage, and immediately hot-reloads the keyboard!
+6. If you ever make a mistake, tap **Reset This Layout** to restore the factory default for that specific layout.
 
 ---
 
 ## Adjusting Keyboard Height & Settings
 
-KeyFold includes a companion Settings app (accessible from your Android app launcher, or by tapping the `⚙` key in the cover screen symbol layer):
+KeyFold includes an interactive height tuner in the companion app:
 
 1. **Height Tuning Card**:
    - Select the target posture profile (e.g. *Tabletop PDA Mode*, *Tablet Landscape*, or *Cover Portrait*).
@@ -161,5 +180,6 @@ KeyFold includes a companion Settings app (accessible from your Android app laun
    - Adjustments write immediately to the active layout JSON file in storage and hot-reload the keyboard.
    - The embedded interactive preview scales in real time so you can verify the height without leaving the settings app.
 2. **Reset Defaults**:
-   - Tap **Reset Defaults** to re-export the factory JSON layouts to your storage if you ever want to revert manual edits.
+   - Tap **Reset Defaults** to re-export all factory JSON layouts to your storage if you ever want to revert manual edits.
+
 

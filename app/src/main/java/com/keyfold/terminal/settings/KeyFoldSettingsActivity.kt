@@ -22,6 +22,13 @@ import com.keyfold.terminal.ui.KeyFoldKeyboardView
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
+import android.net.Uri
+import android.os.Build
+import android.os.Environment
+import android.text.InputType
 import kotlinx.coroutines.cancel
 
 class KeyFoldSettingsActivity : AppCompatActivity() {
@@ -43,6 +50,19 @@ class KeyFoldSettingsActivity : AppCompatActivity() {
     private lateinit var heightSlider: SeekBar
     private lateinit var heightValueLabel: TextView
     private lateinit var saveStatusLabel: TextView
+
+    // JSON Editor UI
+    private lateinit var jsonLayoutSpinner: Spinner
+    private lateinit var jsonEditorText: EditText
+    private val editorLayoutList = listOf(
+        "folded_portrait",
+        "folded_portrait_sym",
+        "unfolded_landscape_pda",
+        "unfolded_landscape_flat",
+        "unfolded_portrait",
+        "folded_landscape",
+        "fn_layer"
+    )
 
     private val posturesList = listOf(
         DevicePosture.UNFOLDED_LANDSCAPE_HALF,
@@ -298,16 +318,173 @@ class KeyFoldSettingsActivity : AppCompatActivity() {
 
         root.addView(heightCard)
 
-        // Storage path info
-        val storageInfoText = TextView(this).apply {
-            val dir = layoutRepository.getLayoutsDirectory().absolutePath
-            text = "JSON Path: $dir\n(Any edits here or via Termux auto-sync)"
-            textSize = 12f
-            setTextColor(ContextCompat.getColor(this@KeyFoldSettingsActivity, R.color.kb_text_secondary))
-            typeface = Typeface.MONOSPACE
-            setPadding(0, 0, 0, 20)
+        // Termux / File Storage Location Card
+        val storageCard = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setBackgroundColor(Color.parseColor("#1C2028"))
+            setPadding(28, 24, 28, 24)
+            layoutParams = LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+            ).apply { setMargins(0, 0, 0, 24) }
         }
-        root.addView(storageInfoText)
+
+        val storageTitle = TextView(this).apply {
+            text = "📁 Termux & File Manager Access"
+            textSize = 16f
+            setTypeface(null, Typeface.BOLD)
+            setTextColor(ContextCompat.getColor(this@KeyFoldSettingsActivity, R.color.kb_accent))
+            setPadding(0, 0, 0, 8)
+        }
+        storageCard.addView(storageTitle)
+
+        val termuxPath = "~/storage/shared/Documents/KeyFold/layouts/"
+        val activeDir = layoutRepository.getLayoutsDirectory().absolutePath
+        val pathDesc = TextView(this).apply {
+            text = "Android Scoped Storage blocks apps from accessing /sdcard/Android/data/.\n\nKeyFold exports layouts to your shared Documents directory so you can edit them directly in Termux, Samsung My Files, or any code editor:\n\n• Termux: $termuxPath\n• Android: $activeDir"
+            textSize = 13f
+            setTextColor(Color.parseColor("#C9D1D9"))
+            setPadding(0, 0, 0, 16)
+        }
+        storageCard.addView(pathDesc)
+
+        val storageBtnRow = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+        }
+
+        val copyPathBtn = Button(this).apply {
+            text = "Copy Termux Path"
+            setOnClickListener {
+                val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                val clip = ClipData.newPlainText("KeyFold Layouts Path", termuxPath)
+                clipboard.setPrimaryClip(clip)
+                Toast.makeText(this@KeyFoldSettingsActivity, "Copied to clipboard!", Toast.LENGTH_SHORT).show()
+            }
+        }
+        storageBtnRow.addView(copyPathBtn)
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R && !Environment.isExternalStorageManager()) {
+            val permBtn = Button(this).apply {
+                text = "Grant Storage Permission"
+                setTextColor(Color.parseColor("#FFCC00"))
+                setOnClickListener {
+                    try {
+                        val intent = Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION).apply {
+                            data = Uri.parse("package:$packageName")
+                        }
+                        startActivity(intent)
+                    } catch (_: Exception) {
+                        startActivity(Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION))
+                    }
+                }
+            }
+            storageBtnRow.addView(permBtn)
+        }
+        storageCard.addView(storageBtnRow)
+        root.addView(storageCard)
+
+        // In-App JSON Layout Editor
+        val editorSectionTitle = TextView(this).apply {
+            text = "In-App Layout JSON Editor"
+            textSize = 18f
+            setTypeface(null, Typeface.BOLD)
+            setTextColor(ContextCompat.getColor(this@KeyFoldSettingsActivity, R.color.kb_accent))
+            setPadding(0, 12, 0, 12)
+        }
+        root.addView(editorSectionTitle)
+
+        val editorCard = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setBackgroundColor(Color.parseColor("#1C2028"))
+            setPadding(28, 24, 28, 24)
+            layoutParams = LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+            ).apply { setMargins(0, 0, 0, 24) }
+        }
+
+        val selectLayoutLabel = TextView(this).apply {
+            text = "Select Layout to Edit:"
+            textSize = 14f
+            setTextColor(ContextCompat.getColor(this@KeyFoldSettingsActivity, R.color.kb_text_primary))
+            setPadding(0, 0, 0, 8)
+        }
+        editorCard.addView(selectLayoutLabel)
+
+        jsonLayoutSpinner = Spinner(this).apply {
+            val names = editorLayoutList.map { "$it.json" }
+            adapter = ArrayAdapter(this@KeyFoldSettingsActivity, android.R.layout.simple_spinner_dropdown_item, names)
+            setPadding(0, 0, 0, 16)
+        }
+        editorCard.addView(jsonLayoutSpinner)
+
+        jsonEditorText = EditText(this).apply {
+            typeface = Typeface.MONOSPACE
+            textSize = 12f
+            setTextColor(Color.parseColor("#E6EDF3"))
+            setBackgroundColor(Color.parseColor("#0D1117"))
+            setPadding(24, 24, 24, 24)
+            gravity = Gravity.TOP or Gravity.START
+            inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_MULTI_LINE or InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS
+            isSingleLine = false
+            layoutParams = LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                (280 * resources.displayMetrics.density).toInt()
+            ).apply { setMargins(0, 0, 0, 16) }
+        }
+        editorCard.addView(jsonEditorText)
+
+        val editorBtnRow = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+        }
+
+        val saveJsonBtn = Button(this).apply {
+            text = "Save & Apply"
+            setOnClickListener {
+                val selectedId = editorLayoutList[jsonLayoutSpinner.selectedItemPosition]
+                val content = jsonEditorText.text.toString()
+                val (success, error) = layoutRepository.saveLayoutRaw(selectedId, content)
+                if (success) {
+                    sendBroadcast(Intent(KeyFoldInputMethodService.ACTION_RELOAD_CONFIG))
+                    updatePostureDisplay()
+                    loadCurrentModeHeightConfig()
+                    Toast.makeText(this@KeyFoldSettingsActivity, "Saved and applied $selectedId.json!", Toast.LENGTH_SHORT).show()
+                } else {
+                    Toast.makeText(this@KeyFoldSettingsActivity, "JSON Syntax Error: $error", Toast.LENGTH_LONG).show()
+                }
+            }
+        }
+        editorBtnRow.addView(saveJsonBtn)
+
+        val resetLayoutBtn = Button(this).apply {
+            text = "Reset This Layout"
+            setOnClickListener {
+                val selectedId = editorLayoutList[jsonLayoutSpinner.selectedItemPosition]
+                if (layoutRepository.resetLayoutToDefault(selectedId)) {
+                    sendBroadcast(Intent(KeyFoldInputMethodService.ACTION_RELOAD_CONFIG))
+                    jsonEditorText.setText(layoutRepository.getLayoutRaw(selectedId))
+                    updatePostureDisplay()
+                    loadCurrentModeHeightConfig()
+                    Toast.makeText(this@KeyFoldSettingsActivity, "Reset $selectedId.json to default!", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+        editorBtnRow.addView(resetLayoutBtn)
+        editorCard.addView(editorBtnRow)
+        root.addView(editorCard)
+
+        jsonLayoutSpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
+                val selectedId = editorLayoutList[position]
+                jsonEditorText.setText(layoutRepository.getLayoutRaw(selectedId))
+            }
+            override fun onNothingSelected(parent: AdapterView<*>?) {}
+        }
+        if (editorLayoutList.isNotEmpty()) {
+            jsonEditorText.setText(layoutRepository.getLayoutRaw(editorLayoutList[0]))
+        }
 
         // Interactive Test Area
         val testLabel = TextView(this).apply {
