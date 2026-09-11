@@ -222,7 +222,7 @@ class KeyFoldKeyboardView @JvmOverloads constructor(
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
         backgroundPaint.color = if (isFrostedGlassEnabled) {
-            Color.argb(195, 18, 22, 28)
+            Color.argb(105, 14, 18, 24)
         } else {
             ContextCompat.getColor(context, R.color.kb_background)
         }
@@ -285,10 +285,10 @@ class KeyFoldKeyboardView @JvmOverloads constructor(
         keyPaint.color = when {
             isLocked -> ContextCompat.getColor(context, R.color.kb_modifier_locked_bg)
             isLatched -> ContextCompat.getColor(context, R.color.kb_modifier_latched_bg)
-            isPressed -> if (isFrostedGlassEnabled) Color.argb(240, 53, 61, 75) else ContextCompat.getColor(context, R.color.kb_key_pressed)
-            isModifier -> if (isFrostedGlassEnabled) Color.argb(215, 24, 28, 36) else ContextCompat.getColor(context, R.color.kb_modifier_bg)
-            key.type == KeyType.action -> if (isFrostedGlassEnabled) Color.argb(215, 28, 33, 42) else ContextCompat.getColor(context, R.color.kb_action_bg)
-            else -> if (isFrostedGlassEnabled) Color.argb(215, 34, 38, 46) else ContextCompat.getColor(context, R.color.kb_key_bg)
+            isPressed -> if (isFrostedGlassEnabled) Color.argb(220, 58, 70, 90) else ContextCompat.getColor(context, R.color.kb_key_pressed)
+            isModifier -> if (isFrostedGlassEnabled) Color.argb(145, 20, 24, 32) else ContextCompat.getColor(context, R.color.kb_modifier_bg)
+            key.type == KeyType.action -> if (isFrostedGlassEnabled) Color.argb(155, 24, 30, 40) else ContextCompat.getColor(context, R.color.kb_action_bg)
+            else -> if (isFrostedGlassEnabled) Color.argb(150, 30, 36, 48) else ContextCompat.getColor(context, R.color.kb_key_bg)
         }
         if (dim) keyPaint.alpha = (keyPaint.alpha * 0.40f).toInt()
         canvas.drawRoundRect(rect, keyCornerRadius, keyCornerRadius, keyPaint)
@@ -296,7 +296,7 @@ class KeyFoldKeyboardView @JvmOverloads constructor(
         // Keycap border
         borderPaint.color = when {
             isLocked || isLatched -> ContextCompat.getColor(context, R.color.kb_modifier_latched_border)
-            isFrostedGlassEnabled -> Color.argb(175, 75, 88, 108)
+            isFrostedGlassEnabled -> Color.argb(165, 85, 105, 130)
             else -> ContextCompat.getColor(context, R.color.kb_key_border)
         }
         if (dim) borderPaint.alpha = (borderPaint.alpha * 0.30f).toInt()

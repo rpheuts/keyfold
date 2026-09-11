@@ -9,6 +9,7 @@ import android.provider.Settings
 import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
+import android.view.WindowManager
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
@@ -529,6 +530,42 @@ class KeyFoldSettingsActivity : AppCompatActivity() {
             setPadding(0, 6, 0, 0)
         }
         appearanceCard.addView(appearanceDesc)
+
+        val wm = getSystemService(Context.WINDOW_SERVICE) as? WindowManager
+        val isBlurSupported = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            wm?.isCrossWindowBlurEnabled == true
+        } else false
+
+        val blurStatusText = TextView(this).apply {
+            textSize = 12f
+            typeface = Typeface.MONOSPACE
+            if (isBlurSupported) {
+                text = "✓ Hardware Blur Engine: Active (Supported)"
+                setTextColor(ContextCompat.getColor(this@KeyFoldSettingsActivity, R.color.kb_led_active))
+            } else {
+                text = "⚠ Hardware Blur: Disabled by System / One UI\n  (Tip: Ensure Power Saving is OFF, check Settings > Accessibility > Vision enhancements > Reduce transparency and blur, or Developer options > Allow window-level blurs)"
+                setTextColor(Color.parseColor("#FFCC00"))
+            }
+            setPadding(0, 10, 0, 0)
+        }
+        appearanceCard.addView(blurStatusText)
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && wm != null) {
+            try {
+                wm.addCrossWindowBlurEnabledListener { enabled ->
+                    runOnUiThread {
+                        if (enabled) {
+                            blurStatusText.text = "✓ Hardware Blur Engine: Active (Supported)"
+                            blurStatusText.setTextColor(ContextCompat.getColor(this@KeyFoldSettingsActivity, R.color.kb_led_active))
+                        } else {
+                            blurStatusText.text = "⚠ Hardware Blur: Disabled by System / One UI\n  (Tip: Ensure Power Saving is OFF, check Settings > Accessibility > Vision enhancements > Reduce transparency and blur, or Developer options > Allow window-level blurs)"
+                            blurStatusText.setTextColor(Color.parseColor("#FFCC00"))
+                        }
+                    }
+                }
+            } catch (_: Throwable) {}
+        }
+
         root.addView(appearanceCard)
 
         // Interactive Test Area

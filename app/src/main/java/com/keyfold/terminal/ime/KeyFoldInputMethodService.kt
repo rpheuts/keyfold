@@ -18,6 +18,7 @@ import android.view.KeyEvent
 import android.view.View
 import android.view.ViewGroup
 import android.view.Window
+import android.view.WindowManager
 import android.view.inputmethod.EditorInfo
 import android.widget.FrameLayout
 import android.widget.Toast
@@ -122,10 +123,23 @@ class KeyFoldInputMethodService : InputMethodService() {
         val targetWin = win ?: return
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             try {
-                val radius = if (isFrostedGlassEnabled) 80 else 0
-                targetWin.setBackgroundBlurRadius(radius)
+                val wm = getSystemService(Context.WINDOW_SERVICE) as? WindowManager
+                Log.i(TAG, "updateWindowBlur: isCrossWindowBlurEnabled=${wm?.isCrossWindowBlurEnabled}")
+                if (isFrostedGlassEnabled) {
+                    targetWin.addFlags(WindowManager.LayoutParams.FLAG_BLUR_BEHIND)
+                    val lp = targetWin.attributes
+                    lp.blurBehindRadius = 80
+                    targetWin.attributes = lp
+                    targetWin.setBackgroundBlurRadius(80)
+                } else {
+                    targetWin.clearFlags(WindowManager.LayoutParams.FLAG_BLUR_BEHIND)
+                    val lp = targetWin.attributes
+                    lp.blurBehindRadius = 0
+                    targetWin.attributes = lp
+                    targetWin.setBackgroundBlurRadius(0)
+                }
             } catch (e: Throwable) {
-                Log.w(TAG, "setBackgroundBlurRadius failed: ${e.message}")
+                Log.w(TAG, "updateWindowBlur failed: ${e.message}")
             }
         }
     }
@@ -162,6 +176,7 @@ class KeyFoldInputMethodService : InputMethodService() {
         super.onStartInputView(info, restarting)
         postureDetector.onConfigurationChanged()
         applyCurrentPostureLayout(postureDetector.posture.value)
+        updateWindowBlur()
         rootContainer?.requestLayout()
     }
 
