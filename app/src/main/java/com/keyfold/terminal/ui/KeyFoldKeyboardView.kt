@@ -248,17 +248,19 @@ class KeyFoldKeyboardView @JvmOverloads constructor(
             trackpadBorderPaint.color = accentColor
             canvas.drawRoundRect(rect, keyCornerRadius, keyCornerRadius, trackpadBorderPaint)
 
-            // Dynamic responsive trackpad text
-            val trackpadText = if (rect.width() > 180f * density) {
-                "◀   SLIDE TO MOVE CURSOR   ▶"
-            } else {
-                "◀   CURSOR   ▶"
+            // Only draw text if the space key is wide enough to comfortably contain it without spilling
+            val minWidthForText = 240f * density
+            if (rect.width() >= minWidthForText) {
+                val trackpadText = "◀   SLIDE TO MOVE CURSOR   ▶"
+                trackpadLabelPaint.textSize = rect.height() * 0.36f
+                trackpadLabelPaint.color = Color.WHITE
+                val textWidth = trackpadLabelPaint.measureText(trackpadText)
+                if (textWidth <= rect.width() - 32f * density) {
+                    val fontMetrics = trackpadLabelPaint.fontMetrics
+                    val textY = rect.centerY() - (fontMetrics.ascent + fontMetrics.descent) / 2f
+                    canvas.drawText(trackpadText, rect.centerX(), textY, trackpadLabelPaint)
+                }
             }
-            trackpadLabelPaint.textSize = rect.height() * 0.36f
-            trackpadLabelPaint.color = Color.WHITE
-            val fontMetrics = trackpadLabelPaint.fontMetrics
-            val textY = rect.centerY() - (fontMetrics.ascent + fontMetrics.descent) / 2f
-            canvas.drawText(trackpadText, rect.centerX(), textY, trackpadLabelPaint)
             return
         }
 
