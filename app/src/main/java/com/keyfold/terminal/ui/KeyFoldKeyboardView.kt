@@ -306,9 +306,9 @@ class KeyFoldKeyboardView @JvmOverloads constructor(
             else -> null
         }
         if (hintText != null && rect.width() > 30 * resources.displayMetrics.density) {
-            shiftLabelPaint.textSize = rect.height() * 0.28f
-            val shiftX = rect.right - 6f * resources.displayMetrics.density
-            val shiftY = rect.top + shiftLabelPaint.textSize + 3f * resources.displayMetrics.density
+            shiftLabelPaint.textSize = rect.height() * 0.20f
+            val shiftX = rect.right - 5f * resources.displayMetrics.density
+            val shiftY = rect.top + shiftLabelPaint.textSize + 3.5f * resources.displayMetrics.density
             if (dim) shiftLabelPaint.alpha = (shiftLabelPaint.alpha * 0.25f).toInt() else shiftLabelPaint.alpha = 255
             canvas.drawText(hintText, shiftX, shiftY, shiftLabelPaint)
         }
