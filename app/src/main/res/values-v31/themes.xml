@@ -1,14 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="Theme.KeyFold" parent="Theme.Material3.Dark.NoActionBar">
-        <item name="android:windowBackground">@color/kb_background</item>
-        <item name="android:statusBarColor">@color/kb_background</item>
-        <item name="android:navigationBarColor">@color/kb_background</item>
-    </style>
-
     <style name="Theme.KeyFold.IME" parent="Theme.KeyFold">
         <item name="android:windowIsTranslucent">true</item>
         <item name="android:windowBackground">@android:color/transparent</item>
         <item name="android:colorBackgroundCacheHint">@null</item>
         <item name="android:windowShowWallpaper">false</item>
+        <item name="android:windowBackgroundBlurRadius">80dp</item>
     </style>
 </resources>

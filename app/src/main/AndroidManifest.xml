@@ -18,6 +18,7 @@
             android:name=".ime.KeyFoldInputMethodService"
             android:label="@string/ime_service_name"
             android:permission="android.permission.BIND_INPUT_METHOD"
+            android:theme="@style/Theme.KeyFold.IME"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.view.InputMethod" />

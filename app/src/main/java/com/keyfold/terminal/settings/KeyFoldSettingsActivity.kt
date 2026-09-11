@@ -486,6 +486,51 @@ class KeyFoldSettingsActivity : AppCompatActivity() {
             jsonEditorText.setText(layoutRepository.getLayoutRaw(editorLayoutList[0]))
         }
 
+        // Appearance & Frosted Glass Card
+        val appearanceCard = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setBackgroundColor(Color.parseColor("#1C2028"))
+            setPadding(28, 24, 28, 24)
+            layoutParams = LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+            ).apply { setMargins(0, 0, 0, 24) }
+        }
+
+        val appearanceTitle = TextView(this).apply {
+            text = "✨ Appearance & Glass Effects"
+            textSize = 16f
+            setTypeface(null, Typeface.BOLD)
+            setTextColor(ContextCompat.getColor(this@KeyFoldSettingsActivity, R.color.kb_accent))
+            setPadding(0, 0, 0, 8)
+        }
+        appearanceCard.addView(appearanceTitle)
+
+        val prefs = getSharedPreferences("keyfold_prefs", Context.MODE_PRIVATE)
+        val frostedSwitch = Switch(this).apply {
+            text = "Frosted Glass & Background Blur"
+            setTextColor(Color.parseColor("#F0F6FC"))
+            textSize = 15f
+            isChecked = prefs.getBoolean("frosted_glass_enabled", true)
+            setOnCheckedChangeListener { _, isChecked ->
+                prefs.edit().putBoolean("frosted_glass_enabled", isChecked).apply()
+                previewKeyboardView.isFrostedGlassEnabled = isChecked
+                sendBroadcast(Intent(KeyFoldInputMethodService.ACTION_RELOAD_CONFIG))
+                val stateText = if (isChecked) "Enabled" else "Disabled"
+                Toast.makeText(this@KeyFoldSettingsActivity, "Frosted Glass: $stateText", Toast.LENGTH_SHORT).show()
+            }
+        }
+        appearanceCard.addView(frostedSwitch)
+
+        val appearanceDesc = TextView(this).apply {
+            text = "Uses translucent smoked glass keycaps and Android 12+ hardware compositor background blur (setBackgroundBlurRadius). Blurs underlying content in apps that pan or don't resize."
+            textSize = 12f
+            setTextColor(Color.parseColor("#8B949E"))
+            setPadding(0, 6, 0, 0)
+        }
+        appearanceCard.addView(appearanceDesc)
+        root.addView(appearanceCard)
+
         // Interactive Test Area
         val testLabel = TextView(this).apply {
             text = "Interactive Test & Preview Area:"
@@ -513,6 +558,7 @@ class KeyFoldSettingsActivity : AppCompatActivity() {
 
         // Keyboard Live Preview
         previewKeyboardView = KeyFoldKeyboardView(this).apply {
+            this.isFrostedGlassEnabled = prefs.getBoolean("frosted_glass_enabled", true)
             layoutParams = LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT

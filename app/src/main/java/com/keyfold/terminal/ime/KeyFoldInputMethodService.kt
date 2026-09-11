@@ -5,14 +5,19 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.res.Configuration
+import android.graphics.Color
+import android.graphics.PixelFormat
 import android.graphics.Rect
+import android.graphics.drawable.ColorDrawable
 import android.inputmethodservice.InputMethodService
+import android.os.Build
 import android.os.SystemClock
 import android.util.Log
 import android.view.KeyCharacterMap
 import android.view.KeyEvent
 import android.view.View
 import android.view.ViewGroup
+import android.view.Window
 import android.view.inputmethod.EditorInfo
 import android.widget.FrameLayout
 import android.widget.Toast
@@ -48,6 +53,9 @@ class KeyFoldInputMethodService : InputMethodService() {
     private var isSymActive = false
     private var baseLayout: KeyboardLayout? = null
 
+    // Appearance Configuration
+    private var isFrostedGlassEnabled = true
+
     // Modifier Double-Tap Tracking
     private var lastShiftTapTime = 0L
     private var lastCtrlTapTime = 0L
@@ -57,6 +65,10 @@ class KeyFoldInputMethodService : InputMethodService() {
     private val reloadReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
             if (intent?.action == ACTION_RELOAD_CONFIG) {
+                val prefs = getSharedPreferences("keyfold_prefs", Context.MODE_PRIVATE)
+                isFrostedGlassEnabled = prefs.getBoolean("frosted_glass_enabled", true)
+                keyboardView?.isFrostedGlassEnabled = isFrostedGlassEnabled
+                updateWindowBlur()
                 reloadLayout()
                 Toast.makeText(this@KeyFoldInputMethodService, "KeyFold: Layouts Reloaded", Toast.LENGTH_SHORT).show()
             }
@@ -65,6 +77,9 @@ class KeyFoldInputMethodService : InputMethodService() {
 
     override fun onCreate() {
         super.onCreate()
+        val prefs = getSharedPreferences("keyfold_prefs", Context.MODE_PRIVATE)
+        isFrostedGlassEnabled = prefs.getBoolean("frosted_glass_enabled", true)
+
         layoutRepository = LayoutRepository(this)
         postureDetector = DevicePostureDetector(this, serviceScope)
 
@@ -96,6 +111,25 @@ class KeyFoldInputMethodService : InputMethodService() {
 
     override fun onEvaluateInputViewShown(): Boolean = true
 
+    override fun onConfigureWindow(win: Window, isInputViewShown: Boolean, isCandidatesViewShown: Boolean) {
+        super.onConfigureWindow(win, isInputViewShown, isCandidatesViewShown)
+        win.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+        win.setFormat(PixelFormat.TRANSLUCENT)
+        updateWindowBlur(win)
+    }
+
+    private fun updateWindowBlur(win: Window? = window?.window) {
+        val targetWin = win ?: return
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            try {
+                val radius = if (isFrostedGlassEnabled) 80 else 0
+                targetWin.setBackgroundBlurRadius(radius)
+            } catch (e: Throwable) {
+                Log.w(TAG, "setBackgroundBlurRadius failed: ${e.message}")
+            }
+        }
+    }
+
     override fun onCreateInputView(): View {
         val container = FrameLayout(this).apply {
             layoutParams = ViewGroup.LayoutParams(
@@ -106,12 +140,19 @@ class KeyFoldInputMethodService : InputMethodService() {
         rootContainer = container
 
         val kb = KeyFoldKeyboardView(this).apply {
+            this.isFrostedGlassEnabled = this@KeyFoldInputMethodService.isFrostedGlassEnabled
             onKeyPressed = { key -> handleKeyPress(key) }
             onKeyLongPressed = { key -> handleLongPress(key) }
             onCursorMove = { stepsX, stepsY -> handleCursorMove(stepsX, stepsY) }
         }
         keyboardView = kb
         container.addView(kb)
+
+        window?.window?.let { win ->
+            win.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+            win.setFormat(PixelFormat.TRANSLUCENT)
+            updateWindowBlur(win)
+        }
 
         applyCurrentPostureLayout(postureDetector.posture.value)
         return container
