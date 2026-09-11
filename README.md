@@ -25,9 +25,10 @@ It brings back the beloved "Hacker's Keyboard" experience with deep hardware fol
    - Centered home row (`a`–`l`) using spacer keys with standard key pitch and sizing.
    - **Secondary Numbers & Long-Press**: Keys `q`–`p` feature numbers `1`–`0` and `.` has `?`. Long-pressing any key for 400ms outputs its secondary symbol with tactile haptic feedback.
    - **Dedicated Symbol Layer**: Tap **`!#1`** to toggle full symbol keyboard (`@`, `#`, `$`, `%`, `&`, `-`, `+`, `(`, `)`, quotes, punctuation, and Settings shortcut `⚙`). Tap **`ABC`** to return.
-4. **Frosted Glass Translucent Theme & Hardware Blur**:
-   - **Android 12+ Compositor Blur**: Leverages `Window.setBackgroundBlurRadius(80)` to hardware-blur windows, dialogs, and sheets underlying the keyboard.
-   - **Smoked Glass Keycaps**: High-contrast smoked glass tiles (`rgba(34, 38, 46, 0.82)`) with crisp bevel borders and a translucent dark background.
+4. **Frosted Glass Translucent Theme & Opacity Slider**:
+   - **Interactive Opacity Slider**: Smooth 10%–100% slider with `- 5%` / `+ 5%` fine-tune steppers in Settings to dial in your preferred background translucency.
+   - **Android 12+ Compositor Blur**: Requests hardware background blur (`Window.setBackgroundBlurRadius(80)` & `FLAG_BLUR_BEHIND`) with live system support diagnostics.
+   - **Smoked Glass Keycaps**: High-contrast smoked glass tiles with crisp bevel borders and a translucent dark background.
    - **Settings Toggle & Live Preview**: Switch between **Frosted Glass** and **Solid Dark** anytime in the companion app with real-time preview updates.
 5. **Interactive Height Tuning & Live Preview**:
    - In-app GUI settings card to customize the keyboard height independently for each posture profile.
