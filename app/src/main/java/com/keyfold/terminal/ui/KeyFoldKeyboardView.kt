@@ -222,7 +222,7 @@ class KeyFoldKeyboardView @JvmOverloads constructor(
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
         backgroundPaint.color = if (isFrostedGlassEnabled) {
-            Color.argb(105, 14, 18, 24)
+            Color.argb(185, 14, 18, 24)
         } else {
             ContextCompat.getColor(context, R.color.kb_background)
         }
