@@ -1,0 +1,96 @@
+{
+  "id": "unfolded_landscape_pda",
+  "name": "PDA Terminal Landscape",
+  "height": {
+    "mode": "fold_hinge",
+    "fallbackPercent": 50
+  },
+  "rows": [
+    {
+      "keys": [
+        { "label": "ESC", "code": "ESCAPE", "type": "action", "width": 1.2 },
+        { "label": "`", "shift": "~", "output": "`", "shiftOutput": "~" },
+        { "label": "1", "shift": "!", "output": "1", "shiftOutput": "!" },
+        { "label": "2", "shift": "@", "output": "2", "shiftOutput": "@" },
+        { "label": "3", "shift": "#", "output": "3", "shiftOutput": "#" },
+        { "label": "4", "shift": "$", "output": "4", "shiftOutput": "$" },
+        { "label": "5", "shift": "%", "output": "5", "shiftOutput": "%" },
+        { "label": "6", "shift": "^", "output": "6", "shiftOutput": "^" },
+        { "label": "7", "shift": "&", "output": "7", "shiftOutput": "&" },
+        { "label": "8", "shift": "*", "output": "8", "shiftOutput": "*" },
+        { "label": "9", "shift": "(", "output": "9", "shiftOutput": "(" },
+        { "label": "0", "shift": ")", "output": "0", "shiftOutput": ")" },
+        { "label": "-", "shift": "_", "output": "-", "shiftOutput": "_" },
+        { "label": "=", "shift": "+", "output": "=", "shiftOutput": "+" },
+        { "label": "⌫", "code": "DEL", "type": "action", "repeat": true, "width": 1.4 }
+      ]
+    },
+    {
+      "keys": [
+        { "label": "TAB", "code": "TAB", "type": "action", "width": 1.4 },
+        { "label": "q", "shift": "Q", "output": "q", "shiftOutput": "Q" },
+        { "label": "w", "shift": "W", "output": "w", "shiftOutput": "W" },
+        { "label": "e", "shift": "E", "output": "e", "shiftOutput": "E" },
+        { "label": "r", "shift": "R", "output": "r", "shiftOutput": "R" },
+        { "label": "t", "shift": "T", "output": "t", "shiftOutput": "T" },
+        { "label": "y", "shift": "Y", "output": "y", "shiftOutput": "Y" },
+        { "label": "u", "shift": "U", "output": "u", "shiftOutput": "U" },
+        { "label": "i", "shift": "I", "output": "i", "shiftOutput": "I" },
+        { "label": "o", "shift": "O", "output": "o", "shiftOutput": "O" },
+        { "label": "p", "shift": "P", "output": "p", "shiftOutput": "P" },
+        { "label": "[", "shift": "{", "output": "[", "shiftOutput": "{" },
+        { "label": "]", "shift": "}", "output": "]", "shiftOutput": "}" },
+        { "label": "\\", "shift": "|", "output": "\\", "shiftOutput": "|", "width": 1.1 }
+      ]
+    },
+    {
+      "keys": [
+        { "label": "CTRL", "code": "CTRL", "type": "modifier", "sticky": true, "width": 1.4 },
+        { "label": "a", "shift": "A", "output": "a", "shiftOutput": "A" },
+        { "label": "s", "shift": "S", "output": "s", "shiftOutput": "S" },
+        { "label": "d", "shift": "D", "output": "d", "shiftOutput": "D" },
+        { "label": "f", "shift": "F", "output": "f", "shiftOutput": "F" },
+        { "label": "g", "shift": "G", "output": "g", "shiftOutput": "G" },
+        { "label": "h", "shift": "H", "output": "h", "shiftOutput": "H" },
+        { "label": "j", "shift": "J", "output": "j", "shiftOutput": "J" },
+        { "label": "k", "shift": "K", "output": "k", "shiftOutput": "K" },
+        { "label": "l", "shift": "L", "output": "l", "shiftOutput": "L" },
+        { "label": ";", "shift": ":", "output": ";", "shiftOutput": ":" },
+        { "label": "'", "shift": "\"", "output": "'", "shiftOutput": "\"" },
+        { "label": "⏎", "code": "ENTER", "type": "action", "width": 1.8 }
+      ]
+    },
+    {
+      "keys": [
+        { "label": "⇧", "code": "SHIFT", "type": "modifier", "sticky": true, "width": 1.6 },
+        { "label": "z", "shift": "Z", "output": "z", "shiftOutput": "Z" },
+        { "label": "x", "shift": "X", "output": "x", "shiftOutput": "X" },
+        { "label": "c", "shift": "C", "output": "c", "shiftOutput": "C" },
+        { "label": "v", "shift": "V", "output": "v", "shiftOutput": "V" },
+        { "label": "b", "shift": "B", "output": "b", "shiftOutput": "B" },
+        { "label": "n", "shift": "N", "output": "n", "shiftOutput": "N" },
+        { "label": "m", "shift": "M", "output": "m", "shiftOutput": "M" },
+        { "label": ",", "shift": "<", "output": ",", "shiftOutput": "<" },
+        { "label": ".", "shift": ">", "output": ".", "shiftOutput": ">" },
+        { "label": "/", "shift": "?", "output": "/", "shiftOutput": "?" },
+        { "label": "▲", "code": "DPAD_UP", "type": "action", "repeat": true, "width": 1.2 },
+        { "label": "⇧", "code": "SHIFT", "type": "modifier", "sticky": true, "width": 1.4 }
+      ]
+    },
+    {
+      "keys": [
+        { "label": "FN", "code": "FN", "type": "layer", "width": 1.2 },
+        { "label": "ALT", "code": "ALT", "type": "modifier", "sticky": true, "width": 1.2 },
+        { "label": "~", "output": "~", "width": 1.0 },
+        { "label": "/", "output": "/", "width": 1.0 },
+        { "label": "-", "output": "-", "width": 1.0 },
+        { "label": " ", "output": " ", "code": "SPACE", "width": 4.5 },
+        { "label": "|", "output": "|", "width": 1.0 },
+        { "label": "◀", "code": "DPAD_LEFT", "type": "action", "repeat": true, "width": 1.1 },
+        { "label": "▼", "code": "DPAD_DOWN", "type": "action", "repeat": true, "width": 1.1 },
+        { "label": "▶", "code": "DPAD_RIGHT", "type": "action", "repeat": true, "width": 1.1 },
+        { "label": "⚙", "code": "SETTINGS", "type": "action", "width": 1.1 }
+      ]
+    }
+  ]
+}

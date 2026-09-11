@@ -1,0 +1,7 @@
+<resources>
+    <style name="Theme.KeyFold" parent="Theme.Material3.Dark.NoActionBar">
+        <item name="android:windowBackground">@color/kb_background</item>
+        <item name="android:statusBarColor">@color/kb_background</item>
+        <item name="android:navigationBarColor">@color/kb_background</item>
+    </style>
+</resources>

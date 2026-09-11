@@ -1,0 +1,11 @@
+<resources>
+    <string name="app_name">KeyFold</string>
+    <string name="ime_service_name">KeyFold Developer Keyboard</string>
+    <string name="subtype_en_us">English (US)</string>
+    <string name="settings_title">KeyFold Settings</string>
+    <string name="section_posture">Current Device Posture</string>
+    <string name="section_layouts">Layout Profiles</string>
+    <string name="reload_layouts">Reload Layouts</string>
+    <string name="export_defaults">Export Default Layouts to Storage</string>
+    <string name="open_layouts_folder">Open Layouts Directory</string>
+</resources>

@@ -1,0 +1,89 @@
+{
+  "id": "fn_layer",
+  "name": "Function & Navigation Layer",
+  "height": {
+    "mode": "percentage",
+    "fallbackPercent": 45
+  },
+  "rows": [
+    {
+      "keys": [
+        { "label": "ESC", "code": "ESCAPE", "type": "action", "width": 1.2 },
+        { "label": "F1", "code": "F1", "type": "action" },
+        { "label": "F2", "code": "F2", "type": "action" },
+        { "label": "F3", "code": "F3", "type": "action" },
+        { "label": "F4", "code": "F4", "type": "action" },
+        { "label": "F5", "code": "F5", "type": "action" },
+        { "label": "F6", "code": "F6", "type": "action" },
+        { "label": "F7", "code": "F7", "type": "action" },
+        { "label": "F8", "code": "F8", "type": "action" },
+        { "label": "F9", "code": "F9", "type": "action" },
+        { "label": "F10", "code": "F10", "type": "action" },
+        { "label": "F11", "code": "F11", "type": "action" },
+        { "label": "F12", "code": "F12", "type": "action" },
+        { "label": "DEL", "code": "FORWARD_DEL", "type": "action", "repeat": true, "width": 1.2 }
+      ]
+    },
+    {
+      "keys": [
+        { "label": "TAB", "code": "TAB", "type": "action", "width": 1.4 },
+        { "label": "INS", "code": "INSERT", "type": "action" },
+        { "label": "HOME", "code": "MOVE_HOME", "type": "action" },
+        { "label": "PGUP", "code": "PAGE_UP", "type": "action" },
+        { "label": "END", "code": "MOVE_END", "type": "action" },
+        { "label": "PGDN", "code": "PAGE_DOWN", "type": "action" },
+        { "label": "7", "output": "7" },
+        { "label": "8", "output": "8" },
+        { "label": "9", "output": "9" },
+        { "label": "/", "output": "/" },
+        { "label": "*", "output": "*" },
+        { "label": "-", "output": "-" },
+        { "label": "⌫", "code": "DEL", "type": "action", "repeat": true, "width": 1.4 }
+      ]
+    },
+    {
+      "keys": [
+        { "label": "CTRL", "code": "CTRL", "type": "modifier", "sticky": true, "width": 1.4 },
+        { "label": "PRTSC", "code": "SYSRQ", "type": "action" },
+        { "label": "PAUSE", "code": "BREAK", "type": "action" },
+        { "label": "SCRLK", "code": "SCROLL_LOCK", "type": "action" },
+        { "label": "MENU", "code": "MENU", "type": "action" },
+        { "label": "4", "output": "4" },
+        { "label": "5", "output": "5" },
+        { "label": "6", "output": "6" },
+        { "label": "+", "output": "+" },
+        { "label": "(", "output": "(" },
+        { "label": ")", "output": ")" },
+        { "label": "⏎", "code": "ENTER", "type": "action", "width": 1.8 }
+      ]
+    },
+    {
+      "keys": [
+        { "label": "⇧", "code": "SHIFT", "type": "modifier", "sticky": true, "width": 1.6 },
+        { "label": "1", "output": "1" },
+        { "label": "2", "output": "2" },
+        { "label": "3", "output": "3" },
+        { "label": "0", "output": "0" },
+        { "label": ".", "output": "." },
+        { "label": "=", "output": "=" },
+        { "label": "[", "output": "[" },
+        { "label": "]", "output": "]" },
+        { "label": "{", "output": "{" },
+        { "label": "}", "output": "}" },
+        { "label": "▲", "code": "DPAD_UP", "type": "action", "repeat": true, "width": 1.2 },
+        { "label": "⇧", "code": "SHIFT", "type": "modifier", "sticky": true, "width": 1.4 }
+      ]
+    },
+    {
+      "keys": [
+        { "label": "BACK", "code": "FN", "type": "layer", "width": 1.4 },
+        { "label": "ALT", "code": "ALT", "type": "modifier", "sticky": true, "width": 1.2 },
+        { "label": " ", "output": " ", "code": "SPACE", "width": 5.0 },
+        { "label": "◀", "code": "DPAD_LEFT", "type": "action", "repeat": true, "width": 1.1 },
+        { "label": "▼", "code": "DPAD_DOWN", "type": "action", "repeat": true, "width": 1.1 },
+        { "label": "▶", "code": "DPAD_RIGHT", "type": "action", "repeat": true, "width": 1.1 },
+        { "label": "⚙", "code": "SETTINGS", "type": "action", "width": 1.1 }
+      ]
+    }
+  ]
+}

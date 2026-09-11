@@ -1,0 +1,15 @@
+<resources>
+    <color name="kb_background">#16181C</color>
+    <color name="kb_key_bg">#22262E</color>
+    <color name="kb_key_pressed">#353D4B</color>
+    <color name="kb_key_border">#2D333F</color>
+    <color name="kb_modifier_bg">#1A1D24</color>
+    <color name="kb_modifier_latched_bg">#183424</color>
+    <color name="kb_modifier_latched_border">#2EA043</color>
+    <color name="kb_modifier_locked_bg">#238636</color>
+    <color name="kb_text_primary">#F0F6FC</color>
+    <color name="kb_text_secondary">#8B949E</color>
+    <color name="kb_accent">#58A6FF</color>
+    <color name="kb_led_active">#3FB950</color>
+    <color name="kb_action_bg">#1E232B</color>
+</resources>
