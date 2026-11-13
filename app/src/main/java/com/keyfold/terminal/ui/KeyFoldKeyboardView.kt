@@ -90,8 +90,6 @@ class KeyFoldKeyboardView @JvmOverloads constructor(
 
     // Dimensions
     private val keyCornerRadius = 8f * resources.displayMetrics.density
-    private val keyHorizontalGap = 4f * resources.displayMetrics.density
-    private val keyVerticalGap = 5f * resources.displayMetrics.density
     private val keyboardPadding = 6f * resources.displayMetrics.density
 
     // Paints
@@ -204,6 +202,10 @@ class KeyFoldKeyboardView @JvmOverloads constructor(
         val layout = currentLayout ?: return
         val rows = layout.rows
         if (rows.isEmpty() || w <= 0 || h <= 0) return
+
+        val density = resources.displayMetrics.density
+        val keyHorizontalGap = layout.horizontalPaddingDp.coerceIn(0f, 24f) * density
+        val keyVerticalGap = layout.verticalPaddingDp.coerceIn(0f, 24f) * density
 
         val availableHeight = h - 2 * keyboardPadding - (rows.size - 1) * keyVerticalGap
         val rowHeight = availableHeight / rows.size

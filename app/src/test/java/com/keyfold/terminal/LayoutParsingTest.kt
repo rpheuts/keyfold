@@ -64,4 +64,24 @@ class LayoutParsingTest {
             assertTrue("Layout in ${file.name} should contain a key with code SPACE", hasSpace)
         }
     }
+
+    @Test
+    fun testLayoutPaddingDefaultsAndRoundTrip() {
+        val minimalJson = """
+            {
+              "id": "custom",
+              "name": "Custom",
+              "rows": [{"keys": [{"label": "a"}]}]
+            }
+        """.trimIndent()
+        val parsedDefault = json.decodeFromString<KeyboardLayout>(minimalJson)
+        assertEquals(4f, parsedDefault.horizontalPaddingDp, 0.001f)
+        assertEquals(5f, parsedDefault.verticalPaddingDp, 0.001f)
+
+        val customized = parsedDefault.copy(horizontalPaddingDp = 8f, verticalPaddingDp = 10f)
+        val encoded = json.encodeToString(KeyboardLayout.serializer(), customized)
+        val reparsed = json.decodeFromString<KeyboardLayout>(encoded)
+        assertEquals(8f, reparsed.horizontalPaddingDp, 0.001f)
+        assertEquals(10f, reparsed.verticalPaddingDp, 0.001f)
+    }
 }

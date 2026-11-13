@@ -57,6 +57,10 @@ class KeyFoldSettingsActivity : AppCompatActivity() {
     private lateinit var visualEditorView: VisualLayoutEditorView
     private lateinit var dragModeSwitch: Switch
     private lateinit var undoBtn: Button
+    private lateinit var horizontalPaddingSlider: SeekBar
+    private lateinit var horizontalPaddingLabel: TextView
+    private lateinit var verticalPaddingSlider: SeekBar
+    private lateinit var verticalPaddingLabel: TextView
     private var editingLayout: KeyboardLayout? = null
     private val undoStack = mutableListOf<KeyboardLayout>()
     private val editorLayoutList = listOf(
@@ -464,6 +468,7 @@ class KeyFoldSettingsActivity : AppCompatActivity() {
                 if (undoStack.isNotEmpty()) {
                     editingLayout = undoStack.removeAt(undoStack.lastIndex)
                     visualEditorView.currentLayout = editingLayout
+                    syncPaddingSliders()
                     undoBtn.isEnabled = undoStack.isNotEmpty()
                     updateVisualEditorHeight()
                 }
@@ -482,6 +487,32 @@ class KeyFoldSettingsActivity : AppCompatActivity() {
         visualActionRow.addView(saveVisualBtn)
         visualActionRow.addView(resetVisualBtn)
         editorCard.addView(visualActionRow)
+
+        val (hLabel, hSlider) = createPaddingControl(
+            parent = editorCard,
+            titlePrefix = "Horizontal Padding (between keys)",
+            defaultDp = 4
+        ) { newDp ->
+            editingLayout?.let { layout ->
+                editingLayout = layout.copy(horizontalPaddingDp = newDp.toFloat())
+                visualEditorView.currentLayout = editingLayout
+            }
+        }
+        horizontalPaddingLabel = hLabel
+        horizontalPaddingSlider = hSlider
+
+        val (vLabel, vSlider) = createPaddingControl(
+            parent = editorCard,
+            titlePrefix = "Vertical Padding (between rows)",
+            defaultDp = 5
+        ) { newDp ->
+            editingLayout?.let { layout ->
+                editingLayout = layout.copy(verticalPaddingDp = newDp.toFloat())
+                visualEditorView.currentLayout = editingLayout
+            }
+        }
+        verticalPaddingLabel = vLabel
+        verticalPaddingSlider = vSlider
 
         visualEditorView = VisualLayoutEditorView(this).apply {
             layoutParams = LinearLayout.LayoutParams(
@@ -773,11 +804,80 @@ class KeyFoldSettingsActivity : AppCompatActivity() {
         }
     }
 
+    private fun createPaddingControl(
+        parent: LinearLayout,
+        titlePrefix: String,
+        defaultDp: Int,
+        onChanged: (Int) -> Unit
+    ): Pair<TextView, SeekBar> {
+        val label = TextView(this).apply {
+            text = "$titlePrefix: ${defaultDp}dp"
+            textSize = 13f
+            setTextColor(ContextCompat.getColor(this@KeyFoldSettingsActivity, R.color.kb_text_primary))
+            setPadding(0, 6, 0, 2)
+        }
+        parent.addView(label)
+
+        val row = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+            setPadding(0, 0, 0, 8)
+        }
+        lateinit var slider: SeekBar
+        val minusBtn = Button(this).apply {
+            text = "-"
+            setOnClickListener {
+                slider.progress = (slider.progress - 1).coerceAtLeast(0)
+                onChanged(slider.progress)
+            }
+        }
+        slider = SeekBar(this).apply {
+            max = 20
+            progress = defaultDp
+            layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f)
+            setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+                override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
+                    label.text = "$titlePrefix: ${progress}dp"
+                    if (fromUser && !isUpdatingUi) {
+                        onChanged(progress)
+                    }
+                }
+                override fun onStartTrackingTouch(seekBar: SeekBar?) {}
+                override fun onStopTrackingTouch(seekBar: SeekBar?) {}
+            })
+        }
+        val plusBtn = Button(this).apply {
+            text = "+"
+            setOnClickListener {
+                slider.progress = (slider.progress + 1).coerceAtMost(slider.max)
+                onChanged(slider.progress)
+            }
+        }
+        row.addView(minusBtn)
+        row.addView(slider)
+        row.addView(plusBtn)
+        parent.addView(row)
+        return Pair(label, slider)
+    }
+
+    private fun syncPaddingSliders() {
+        val layout = editingLayout ?: return
+        isUpdatingUi = true
+        val hDp = layout.horizontalPaddingDp.toInt().coerceIn(0, 20)
+        val vDp = layout.verticalPaddingDp.toInt().coerceIn(0, 20)
+        horizontalPaddingSlider.progress = hDp
+        horizontalPaddingLabel.text = "Horizontal Padding (between keys): ${hDp}dp"
+        verticalPaddingSlider.progress = vDp
+        verticalPaddingLabel.text = "Vertical Padding (between rows): ${vDp}dp"
+        isUpdatingUi = false
+    }
+
     private fun loadSelectedLayoutIntoEditor(layoutId: String) {
         editingLayout = layoutRepository.getLayoutById(layoutId)
         undoStack.clear()
         undoBtn.isEnabled = false
         visualEditorView.currentLayout = editingLayout
+        syncPaddingSliders()
         updateVisualEditorHeight()
     }
 

@@ -44,5 +44,7 @@ data class KeyboardLayout(
     val id: String,
     val name: String,
     val height: HeightConfig = HeightConfig(),
+    val horizontalPaddingDp: Float = 4f,
+    val verticalPaddingDp: Float = 5f,
     val rows: List<KeyboardRow>
 )

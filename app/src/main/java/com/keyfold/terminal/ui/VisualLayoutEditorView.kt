@@ -53,10 +53,14 @@ class VisualLayoutEditorView @JvmOverloads constructor(
     private val density = resources.displayMetrics.density
     private val touchSlop = ViewConfiguration.get(context).scaledTouchSlop
     private val keyCornerRadius = 7f * density
-    private val keyHorizontalGap = 4f * density
-    private val keyVerticalGap = 5f * density
     private val keyboardPadding = 6f * density
     private val addBtnWidth = 26f * density
+
+    private fun currentKeyHorizontalGap(): Float =
+        (currentLayout?.horizontalPaddingDp ?: 4f).coerceIn(0f, 24f) * density
+
+    private fun currentKeyVerticalGap(): Float =
+        (currentLayout?.verticalPaddingDp ?: 5f).coerceIn(0f, 24f) * density
 
     private data class KeySlot(
         val rowIndex: Int,
@@ -143,6 +147,8 @@ class VisualLayoutEditorView @JvmOverloads constructor(
         val rows = layout.rows
         if (rows.isEmpty() || w <= 0 || h <= 0) return
 
+        val keyHorizontalGap = currentKeyHorizontalGap()
+        val keyVerticalGap = currentKeyVerticalGap()
         val availableHeight = h - 2 * keyboardPadding - (rows.size - 1) * keyVerticalGap
         val rowHeight = max(24f * density, availableHeight / rows.size)
 
@@ -294,6 +300,7 @@ class VisualLayoutEditorView @JvmOverloads constructor(
     private fun drawDropIndicator(canvas: Canvas, targetRow: Int, targetIndex: Int) {
         val rs = rowSlots.getOrNull(targetRow) ?: return
         val rowKeys = keySlots.filter { it.rowIndex == targetRow }
+        val keyHorizontalGap = currentKeyHorizontalGap()
         val barX = when {
             rowKeys.isEmpty() -> keyboardPadding
             targetIndex <= 0 -> rowKeys.first().rect.left - keyHorizontalGap / 2f
