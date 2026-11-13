@@ -15,11 +15,14 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import com.keyfold.terminal.R
 import com.keyfold.terminal.ime.KeyFoldInputMethodService
+import com.keyfold.terminal.layout.LayoutEditorMutator
 import com.keyfold.terminal.layout.LayoutRepository
 import com.keyfold.terminal.model.HeightConfig
+import com.keyfold.terminal.model.KeyDefinition
+import com.keyfold.terminal.model.KeyboardLayout
 import com.keyfold.terminal.posture.DevicePosture
 import com.keyfold.terminal.posture.DevicePostureDetector
-import com.keyfold.terminal.ui.KeyFoldKeyboardView
+import com.keyfold.terminal.ui.VisualLayoutEditorView
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -29,7 +32,6 @@ import android.content.Context
 import android.net.Uri
 import android.os.Build
 import android.os.Environment
-import android.text.InputType
 import kotlinx.coroutines.cancel
 
 class KeyFoldSettingsActivity : AppCompatActivity() {
@@ -39,8 +41,6 @@ class KeyFoldSettingsActivity : AppCompatActivity() {
     private lateinit var postureDetector: DevicePostureDetector
 
     private lateinit var postureStatusText: TextView
-    private lateinit var previewKeyboardView: KeyFoldKeyboardView
-    private lateinit var testInputField: EditText
 
     // Height Configuration UI
     private lateinit var modeSpinner: Spinner
@@ -52,9 +52,13 @@ class KeyFoldSettingsActivity : AppCompatActivity() {
     private lateinit var heightValueLabel: TextView
     private lateinit var saveStatusLabel: TextView
 
-    // JSON Editor UI
-    private lateinit var jsonLayoutSpinner: Spinner
-    private lateinit var jsonEditorText: EditText
+    // Visual Layout Editor UI
+    private lateinit var layoutSpinner: Spinner
+    private lateinit var visualEditorView: VisualLayoutEditorView
+    private lateinit var dragModeSwitch: Switch
+    private lateinit var undoBtn: Button
+    private var editingLayout: KeyboardLayout? = null
+    private val undoStack = mutableListOf<KeyboardLayout>()
     private val editorLayoutList = listOf(
         "folded_portrait",
         "folded_portrait_sym",
@@ -385,9 +389,9 @@ class KeyFoldSettingsActivity : AppCompatActivity() {
         storageCard.addView(storageBtnRow)
         root.addView(storageCard)
 
-        // In-App JSON Layout Editor
+        // In-App Visual Layout Editor
         val editorSectionTitle = TextView(this).apply {
-            text = "In-App Layout JSON Editor"
+            text = "Visual Layout Editor"
             textSize = 18f
             setTypeface(null, Typeface.BOLD)
             setTextColor(ContextCompat.getColor(this@KeyFoldSettingsActivity, R.color.kb_accent))
@@ -413,78 +417,120 @@ class KeyFoldSettingsActivity : AppCompatActivity() {
         }
         editorCard.addView(selectLayoutLabel)
 
-        jsonLayoutSpinner = Spinner(this).apply {
+        layoutSpinner = Spinner(this).apply {
             val names = editorLayoutList.map { "$it.json" }
             adapter = ArrayAdapter(this@KeyFoldSettingsActivity, android.R.layout.simple_spinner_dropdown_item, names)
-            setPadding(0, 0, 0, 16)
+            setPadding(0, 0, 0, 12)
         }
-        editorCard.addView(jsonLayoutSpinner)
+        editorCard.addView(layoutSpinner)
 
-        jsonEditorText = EditText(this).apply {
-            typeface = Typeface.MONOSPACE
+        val visualHintText = TextView(this).apply {
+            text = "Tap a key to edit/resize/delete, tap '+' to add a key, or enable Drag Mode to move keys."
             textSize = 12f
-            setTextColor(Color.parseColor("#E6EDF3"))
-            setBackgroundColor(Color.parseColor("#0D1117"))
-            setPadding(24, 24, 24, 24)
-            gravity = Gravity.TOP or Gravity.START
-            inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_MULTI_LINE or InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS
-            isSingleLine = false
-            layoutParams = LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                (280 * resources.displayMetrics.density).toInt()
-            ).apply { setMargins(0, 0, 0, 16) }
+            setTextColor(Color.parseColor("#8B949E"))
+            setPadding(0, 0, 0, 10)
         }
-        editorCard.addView(jsonEditorText)
+        editorCard.addView(visualHintText)
 
-        val editorBtnRow = LinearLayout(this).apply {
+        dragModeSwitch = Switch(this).apply {
+            text = "Drag Mode (Move Keys)"
+            setTextColor(Color.parseColor("#F0F6FC"))
+            textSize = 14f
+            isChecked = false
+            setPadding(0, 0, 0, 10)
+            setOnCheckedChangeListener { _, isChecked ->
+                visualEditorView.isDragMode = isChecked
+            }
+        }
+        editorCard.addView(dragModeSwitch)
+
+        val visualActionRow = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER_VERTICAL
+            setPadding(0, 0, 0, 12)
         }
-
-        val saveJsonBtn = Button(this).apply {
+        val addRowBtn = Button(this).apply {
+            text = "+ Row"
+            setOnClickListener {
+                editingLayout?.let { layout ->
+                    applyVisualMutation(LayoutEditorMutator.addRow(layout))
+                }
+            }
+        }
+        undoBtn = Button(this).apply {
+            text = "Undo"
+            isEnabled = false
+            setOnClickListener {
+                if (undoStack.isNotEmpty()) {
+                    editingLayout = undoStack.removeAt(undoStack.lastIndex)
+                    visualEditorView.currentLayout = editingLayout
+                    undoBtn.isEnabled = undoStack.isNotEmpty()
+                    updateVisualEditorHeight()
+                }
+            }
+        }
+        val saveVisualBtn = Button(this).apply {
             text = "Save & Apply"
-            setOnClickListener {
-                val selectedId = editorLayoutList[jsonLayoutSpinner.selectedItemPosition]
-                val content = jsonEditorText.text.toString()
-                val (success, error) = layoutRepository.saveLayoutRaw(selectedId, content)
-                if (success) {
-                    sendBroadcast(Intent(KeyFoldInputMethodService.ACTION_RELOAD_CONFIG))
-                    updatePostureDisplay()
-                    loadCurrentModeHeightConfig()
-                    Toast.makeText(this@KeyFoldSettingsActivity, "Saved and applied $selectedId.json!", Toast.LENGTH_SHORT).show()
-                } else {
-                    Toast.makeText(this@KeyFoldSettingsActivity, "JSON Syntax Error: $error", Toast.LENGTH_LONG).show()
-                }
-            }
+            setOnClickListener { saveCurrentVisualLayout() }
         }
-        editorBtnRow.addView(saveJsonBtn)
+        val resetVisualBtn = Button(this).apply {
+            text = "Reset"
+            setOnClickListener { resetSelectedLayout() }
+        }
+        visualActionRow.addView(addRowBtn)
+        visualActionRow.addView(undoBtn)
+        visualActionRow.addView(saveVisualBtn)
+        visualActionRow.addView(resetVisualBtn)
+        editorCard.addView(visualActionRow)
 
-        val resetLayoutBtn = Button(this).apply {
-            text = "Reset This Layout"
-            setOnClickListener {
-                val selectedId = editorLayoutList[jsonLayoutSpinner.selectedItemPosition]
-                if (layoutRepository.resetLayoutToDefault(selectedId)) {
-                    sendBroadcast(Intent(KeyFoldInputMethodService.ACTION_RELOAD_CONFIG))
-                    jsonEditorText.setText(layoutRepository.getLayoutRaw(selectedId))
-                    updatePostureDisplay()
-                    loadCurrentModeHeightConfig()
-                    Toast.makeText(this@KeyFoldSettingsActivity, "Reset $selectedId.json to default!", Toast.LENGTH_SHORT).show()
+        visualEditorView = VisualLayoutEditorView(this).apply {
+            layoutParams = LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                (260 * resources.displayMetrics.density).toInt()
+            )
+            onKeyTapped = { rowIndex, keyIndex, key ->
+                KeyEditorDialog.show(
+                    context = this@KeyFoldSettingsActivity,
+                    initialKey = key,
+                    isNewKey = false,
+                    onSave = { updatedKey ->
+                        editingLayout?.let { layout ->
+                            applyVisualMutation(LayoutEditorMutator.updateKey(layout, rowIndex, keyIndex, updatedKey))
+                        }
+                    },
+                    onDelete = {
+                        editingLayout?.let { layout ->
+                            applyVisualMutation(LayoutEditorMutator.deleteKey(layout, rowIndex, keyIndex))
+                        }
+                    }
+                )
+            }
+            onAddKeyToRow = { rowIndex ->
+                KeyEditorDialog.show(
+                    context = this@KeyFoldSettingsActivity,
+                    initialKey = KeyDefinition(label = "", width = 1.0f),
+                    isNewKey = true,
+                    onSave = { newKey ->
+                        editingLayout?.let { layout ->
+                            applyVisualMutation(LayoutEditorMutator.addKey(layout, rowIndex, newKey))
+                        }
+                    }
+                )
+            }
+            onKeyMoved = { fromRow, fromIndex, toRow, toIndex ->
+                editingLayout?.let { layout ->
+                    applyVisualMutation(LayoutEditorMutator.moveKey(layout, fromRow, fromIndex, toRow, toIndex))
                 }
             }
         }
-        editorBtnRow.addView(resetLayoutBtn)
-        editorCard.addView(editorBtnRow)
+        editorCard.addView(visualEditorView)
         root.addView(editorCard)
 
-        jsonLayoutSpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+        layoutSpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
-                val selectedId = editorLayoutList[position]
-                jsonEditorText.setText(layoutRepository.getLayoutRaw(selectedId))
+                loadSelectedLayoutIntoEditor(editorLayoutList[position])
             }
             override fun onNothingSelected(parent: AdapterView<*>?) {}
-        }
-        if (editorLayoutList.isNotEmpty()) {
-            jsonEditorText.setText(layoutRepository.getLayoutRaw(editorLayoutList[0]))
         }
 
         // Appearance & Frosted Glass Card
@@ -570,7 +616,6 @@ class KeyFoldSettingsActivity : AppCompatActivity() {
             setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
                 override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
                     opacityLabel.text = "Background Opacity: $progress%"
-                    previewKeyboardView.frostedBgOpacity = progress
                     if (fromUser) {
                         prefs.edit().putInt("frosted_bg_opacity", progress).apply()
                         sendBroadcast(Intent(KeyFoldInputMethodService.ACTION_RELOAD_CONFIG))
@@ -599,7 +644,6 @@ class KeyFoldSettingsActivity : AppCompatActivity() {
 
         frostedSwitch.setOnCheckedChangeListener { _, isChecked ->
             prefs.edit().putBoolean("frosted_glass_enabled", isChecked).apply()
-            previewKeyboardView.isFrostedGlassEnabled = isChecked
             opacityContainer.visibility = if (isChecked) View.VISIBLE else View.GONE
             sendBroadcast(Intent(KeyFoldInputMethodService.ACTION_RELOAD_CONFIG))
             val stateText = if (isChecked) "Enabled" else "Disabled"
@@ -643,55 +687,6 @@ class KeyFoldSettingsActivity : AppCompatActivity() {
 
         root.addView(appearanceCard)
 
-        // Interactive Test Area
-        val testLabel = TextView(this).apply {
-            text = "Interactive Test & Preview Area:"
-            textSize = 14f
-            setTypeface(null, Typeface.BOLD)
-            setTextColor(ContextCompat.getColor(this@KeyFoldSettingsActivity, R.color.kb_text_primary))
-            setPadding(0, 0, 0, 8)
-        }
-        root.addView(testLabel)
-
-        testInputField = EditText(this).apply {
-            hint = "Test typing here..."
-            setTextColor(ContextCompat.getColor(this@KeyFoldSettingsActivity, R.color.kb_text_primary))
-            setHintTextColor(ContextCompat.getColor(this@KeyFoldSettingsActivity, R.color.kb_text_secondary))
-            setBackgroundColor(Color.parseColor("#1C2028"))
-            setPadding(24, 24, 24, 24)
-            typeface = Typeface.MONOSPACE
-            textSize = 14f
-            layoutParams = LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT
-            ).apply { setMargins(0, 0, 0, 20) }
-        }
-        root.addView(testInputField)
-
-        // Keyboard Live Preview
-        previewKeyboardView = KeyFoldKeyboardView(this).apply {
-            this.isFrostedGlassEnabled = prefs.getBoolean("frosted_glass_enabled", true)
-            this.frostedBgOpacity = prefs.getInt("frosted_bg_opacity", 75)
-            layoutParams = LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT
-            )
-            onKeyPressed = { key ->
-                if (!key.output.isNullOrEmpty()) {
-                    testInputField.append(key.output)
-                } else if (key.label.length == 1) {
-                    testInputField.append(key.label)
-                }
-            }
-            onCursorMove = { stepsX, _ ->
-                val current = testInputField.selectionStart
-                val len = testInputField.text.length
-                val target = (current + stepsX).coerceIn(0, len)
-                testInputField.setSelection(target)
-            }
-        }
-        root.addView(previewKeyboardView)
-
         setContentView(scrollView)
 
         postureDetector.setOnPostureChangedListener { _, _ ->
@@ -702,6 +697,9 @@ class KeyFoldSettingsActivity : AppCompatActivity() {
         postureDetector.start()
         updatePostureDisplay()
         loadCurrentModeHeightConfig()
+        if (editorLayoutList.isNotEmpty()) {
+            loadSelectedLayoutIntoEditor(editorLayoutList[0])
+        }
     }
 
     override fun onDestroy() {
@@ -743,13 +741,6 @@ class KeyFoldSettingsActivity : AppCompatActivity() {
         heightSlider.progress = (percent - 25).coerceIn(0, heightSlider.max)
         updateSliderLabel()
 
-        // Update preview keyboard
-        previewKeyboardView.currentLayout = layout
-        val calculatedHeight = postureDetector.calculateKeyboardHeight(selectedPosture, h)
-        previewKeyboardView.layoutParams.height = calculatedHeight
-        previewKeyboardView.requestLayout()
-        previewKeyboardView.invalidate()
-
         saveStatusLabel.text = "Loaded from ${selectedPosture.defaultLayoutId}.json"
         isUpdatingUi = false
     }
@@ -779,14 +770,59 @@ class KeyFoldSettingsActivity : AppCompatActivity() {
         if (success) {
             saveStatusLabel.text = "Saved & applied to $layoutId.json ($percent%)"
             sendBroadcast(Intent(KeyFoldInputMethodService.ACTION_RELOAD_CONFIG))
+        }
+    }
 
-            // Update preview
-            val updatedLayout = layoutRepository.getLayoutById(layoutId)
-            previewKeyboardView.currentLayout = updatedLayout
-            val calculatedHeight = postureDetector.calculateKeyboardHeight(selectedPosture, newHeight)
-            previewKeyboardView.layoutParams.height = calculatedHeight
-            previewKeyboardView.requestLayout()
-            previewKeyboardView.invalidate()
+    private fun loadSelectedLayoutIntoEditor(layoutId: String) {
+        editingLayout = layoutRepository.getLayoutById(layoutId)
+        undoStack.clear()
+        undoBtn.isEnabled = false
+        visualEditorView.currentLayout = editingLayout
+        updateVisualEditorHeight()
+    }
+
+    private fun applyVisualMutation(updated: KeyboardLayout) {
+        editingLayout?.let { previous ->
+            undoStack.add(previous)
+            if (undoStack.size > 30) undoStack.removeAt(0)
+        }
+        editingLayout = updated
+        visualEditorView.currentLayout = updated
+        undoBtn.isEnabled = undoStack.isNotEmpty()
+        updateVisualEditorHeight()
+    }
+
+    private fun updateVisualEditorHeight() {
+        val rows = editingLayout?.rows?.size ?: 4
+        val density = resources.displayMetrics.density
+        val targetHeight = ((rows * 56 + 16) * density).toInt().coerceAtLeast((180 * density).toInt())
+        visualEditorView.layoutParams.height = targetHeight
+        visualEditorView.requestLayout()
+    }
+
+    private fun saveCurrentVisualLayout() {
+        val layout = editingLayout ?: return
+        val (success, error) = layoutRepository.saveLayout(layout)
+        if (success) {
+            undoStack.clear()
+            undoBtn.isEnabled = false
+            sendBroadcast(Intent(KeyFoldInputMethodService.ACTION_RELOAD_CONFIG))
+            updatePostureDisplay()
+            loadCurrentModeHeightConfig()
+            Toast.makeText(this, "Saved and applied ${layout.id}.json!", Toast.LENGTH_SHORT).show()
+        } else {
+            Toast.makeText(this, "Failed to save layout: $error", Toast.LENGTH_LONG).show()
+        }
+    }
+
+    private fun resetSelectedLayout() {
+        val selectedId = editorLayoutList[layoutSpinner.selectedItemPosition]
+        if (layoutRepository.resetLayoutToDefault(selectedId)) {
+            sendBroadcast(Intent(KeyFoldInputMethodService.ACTION_RELOAD_CONFIG))
+            loadSelectedLayoutIntoEditor(selectedId)
+            updatePostureDisplay()
+            loadCurrentModeHeightConfig()
+            Toast.makeText(this, "Reset $selectedId.json to default!", Toast.LENGTH_SHORT).show()
         }
     }
 }

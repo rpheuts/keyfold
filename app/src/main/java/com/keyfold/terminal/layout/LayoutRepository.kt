@@ -198,20 +198,42 @@ class LayoutRepository(private val context: Context) {
         }
     }
 
+    fun encodeLayout(layout: KeyboardLayout): String {
+        return json.encodeToString(KeyboardLayout.serializer(), layout)
+    }
+
+    fun decodeLayout(jsonContent: String): Result<KeyboardLayout> {
+        return runCatching { json.decodeFromString<KeyboardLayout>(jsonContent) }
+    }
+
+    private fun persistLayoutToDisk(id: String, jsonContent: String, parsed: KeyboardLayout) {
+        val dir = getLayoutsDirectory()
+        val file = File(dir, "$id.json")
+        file.writeText(jsonContent)
+        layoutCache[id] = parsed
+
+        val appDir = getAppSpecificLayoutsDirectory()
+        if (appDir.absolutePath != dir.absolutePath) {
+            try {
+                File(appDir, "$id.json").writeText(jsonContent)
+            } catch (_: Exception) {}
+        }
+    }
+
+    fun saveLayout(layout: KeyboardLayout): Pair<Boolean, String?> {
+        return try {
+            val jsonString = encodeLayout(layout)
+            persistLayoutToDisk(layout.id, jsonString, layout)
+            Pair(true, null)
+        } catch (e: Exception) {
+            Pair(false, e.message)
+        }
+    }
+
     fun saveLayoutRaw(id: String, jsonContent: String): Pair<Boolean, String?> {
         return try {
             val parsed = json.decodeFromString<KeyboardLayout>(jsonContent)
-            val dir = getLayoutsDirectory()
-            val file = File(dir, "$id.json")
-            file.writeText(jsonContent)
-            layoutCache[id] = parsed
-
-            val appDir = getAppSpecificLayoutsDirectory()
-            if (appDir.absolutePath != dir.absolutePath) {
-                try {
-                    File(appDir, "$id.json").writeText(jsonContent)
-                } catch (_: Exception) {}
-            }
+            persistLayoutToDisk(id, jsonContent, parsed)
             Pair(true, null)
         } catch (e: Exception) {
             Pair(false, e.message)
@@ -232,21 +254,9 @@ class LayoutRepository(private val context: Context) {
         return try {
             val currentLayout = getLayoutById(layoutId)
             val updatedLayout = currentLayout.copy(height = heightConfig)
-            layoutCache[layoutId] = updatedLayout
-
-            val dir = getLayoutsDirectory()
-            val file = File(dir, "$layoutId.json")
-            val jsonString = json.encodeToString(KeyboardLayout.serializer(), updatedLayout)
-            file.writeText(jsonString)
-
-            val appDir = getAppSpecificLayoutsDirectory()
-            if (appDir.absolutePath != dir.absolutePath) {
-                try {
-                    File(appDir, "$layoutId.json").writeText(jsonString)
-                } catch (_: Exception) {}
-            }
-
-            Log.i(TAG, "Saved updated height config to ${file.absolutePath}")
+            val jsonString = encodeLayout(updatedLayout)
+            persistLayoutToDisk(layoutId, jsonString, updatedLayout)
+            Log.i(TAG, "Saved updated height config for $layoutId")
             true
         } catch (e: Exception) {
             Log.e(TAG, "Failed to save layout height: ${e.message}", e)
